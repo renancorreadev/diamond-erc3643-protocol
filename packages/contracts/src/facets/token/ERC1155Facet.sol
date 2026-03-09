@@ -5,6 +5,7 @@ import {LibERC1155Storage, ERC1155Storage, PartitionBalance} from "../../storage
 import {LibAssetStorage, AssetStorage, AssetConfig} from "../../storage/LibAssetStorage.sol";
 import {LibAppStorage, AppStorage} from "../../libraries/LibAppStorage.sol";
 import {LibFreezeStorage, FreezeStorage} from "../../storage/LibFreezeStorage.sol";
+import {LibSupplyStorage, SupplyStorage} from "../../storage/LibSupplyStorage.sol";
 import {IComplianceModule} from "../../interfaces/compliance/IComplianceModule.sol";
 
 /**
@@ -182,11 +183,23 @@ contract ERC1155Facet {
                     INTERNAL — EXECUTE
     //////////////////////////////////////////////////////////////*/
 
-    /// @dev Mutates partition balances: deduct from sender's free, add to receiver's free
+    /// @dev Mutates partition balances and updates holder tracking
     function _executeTransfer(address from, address to, uint256 id, uint256 amount) internal {
         ERC1155Storage storage es = LibERC1155Storage.layout();
         es.partitions[id][from].free -= amount;
         es.partitions[id][to].free += amount;
+
+        // Update holder tracking
+        SupplyStorage storage ss = LibSupplyStorage.layout();
+        if (!ss.isHolder[id][to]) {
+            ss.isHolder[id][to] = true;
+            ss.holderCount[id] += 1;
+        }
+        PartitionBalance storage pb = es.partitions[id][from];
+        if (pb.free == 0 && pb.locked == 0 && pb.custody == 0 && pb.pendingSettlement == 0) {
+            ss.isHolder[id][from] = false;
+            ss.holderCount[id] -= 1;
+        }
     }
 
     function _compliancePostTransfer(uint256 tokenId, address from, address to, uint256 amount) internal {
