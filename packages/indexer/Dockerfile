@@ -1,68 +1,51 @@
-# ── Stage 1: Build RocksDB + Go binary ──
-FROM golang:1.24-bookworm AS builder
+# ── Stage 1: Build with Ubuntu (has rocksdb PPA) ──
+FROM ubuntu:24.04 AS builder
 
-# Install build tools and RocksDB compile dependencies
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Go 1.24 + RocksDB dev from Ubuntu repos
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    golang-go \
+    librocksdb-dev \
     build-essential \
-    cmake \
-    libsnappy-dev \
-    liblz4-dev \
-    libzstd-dev \
-    libbz2-dev \
-    zlib1g-dev \
-    wget \
+    ca-certificates \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Build RocksDB 7.10.2 from source (stable, compiles clean with GCC 12)
-ENV ROCKSDB_VERSION=7.10.2
-RUN wget -qO- https://github.com/facebook/rocksdb/archive/refs/tags/v${ROCKSDB_VERSION}.tar.gz | tar xz \
-    && cd rocksdb-${ROCKSDB_VERSION} \
-    && PORTABLE=1 EXTRA_CXXFLAGS="-Wno-error" make shared_lib -j$(nproc) \
-    && make install-shared INSTALL_PATH=/usr/local \
-    && cd / && rm -rf rocksdb-${ROCKSDB_VERSION} \
-    && ldconfig
+# Ubuntu 24.04 ships Go 1.22 — we need 1.24, install manually
+RUN rm -rf /usr/local/go && \
+    apt-get update && apt-get install -y wget && \
+    wget -qO- https://go.dev/dl/go1.24.5.linux-amd64.tar.gz | tar -C /usr/local -xz && \
+    rm -rf /var/lib/apt/lists/*
+ENV PATH="/usr/local/go/bin:${PATH}"
+ENV GOPATH=/go
+ENV PATH="${GOPATH}/bin:${PATH}"
 
 WORKDIR /src
 
 # Cache Go modules
 COPY go.mod go.sum ./
 ENV CGO_ENABLED=1
-ENV CGO_CFLAGS="-I/usr/local/include"
-ENV CGO_LDFLAGS="-L/usr/local/lib -lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy -llz4 -lzstd"
 RUN go mod download
 
-# Copy source and build
+# Copy source and build (static link rocksdb)
 COPY . .
 RUN go build -ldflags="-s -w" -o /indexer ./cmd/indexer/
 
-# ── Stage 2: Runtime ──
-FROM debian:bookworm-slim
+# ── Stage 2: Minimal runtime ──
+FROM ubuntu:24.04
 
-# Install runtime libs
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libsnappy1v5 \
-    liblz4-1 \
-    libzstd1 \
-    libbz2-1.0 \
-    zlib1g \
-    libstdc++6 \
+    librocksdb8.9t64 \
     ca-certificates \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy RocksDB shared lib from builder
-COPY --from=builder /usr/local/lib/librocksdb.so* /usr/local/lib/
-RUN ldconfig
-
-# Create non-root user
 RUN useradd -r -s /bin/false indexer
 
 WORKDIR /app
-
-# Copy binary
 COPY --from=builder /indexer /app/indexer
 
-# Data volume
 RUN mkdir -p /app/data && chown indexer:indexer /app/data
 VOLUME ["/app/data"]
 
