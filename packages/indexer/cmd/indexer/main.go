@@ -64,6 +64,7 @@ func main() {
 	mux.Handle("POST /graphql", graph.Handler(schema))
 	mux.Handle("GET /", graph.PlaygroundHandler())
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Content-Type", "application/json")
 		cursor, _ := db.GetCursor()
 		w.Write([]byte(`{"status":"ok","lastBlock":` + formatUint(cursor) + `}`))

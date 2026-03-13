@@ -31,7 +31,7 @@ var (
 
 // MetadataFacetMetaData contains all meta data concerning the MetadataFacet contract.
 var MetadataFacetMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"allowedCountries\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint16[]\",\"internalType\":\"uint16[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"issuer\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"name\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"supplyCap\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"symbol\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tokenInfo\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"name_\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"symbol_\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"uri_\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"totalSupply_\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"supplyCap_\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"holderCount_\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"issuer_\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"paused_\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"uri\",\"inputs\":[{\"name\":\"id\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"URI\",\"inputs\":[{\"name\":\"value\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"id\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"allowedCountries\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint16[]\",\"internalType\":\"uint16[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"issuer\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"name\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"name\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"supplyCap\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"symbol\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"symbol\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tokenInfo\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"name_\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"symbol_\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"uri_\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"totalSupply_\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"supplyCap_\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"holderCount_\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"issuer_\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"paused_\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"uri\",\"inputs\":[{\"name\":\"id\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"URI\",\"inputs\":[{\"name\":\"value\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"id\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false}]",
 }
 
 // MetadataFacetABI is the input ABI used to generate the binding from.
@@ -273,6 +273,37 @@ func (_MetadataFacet *MetadataFacetCallerSession) Name(tokenId *big.Int) (string
 	return _MetadataFacet.Contract.Name(&_MetadataFacet.CallOpts, tokenId)
 }
 
+// Name0 is a free data retrieval call binding the contract method 0x06fdde03.
+//
+// Solidity: function name() view returns(string)
+func (_MetadataFacet *MetadataFacetCaller) Name0(opts *bind.CallOpts) (string, error) {
+	var out []interface{}
+	err := _MetadataFacet.contract.Call(opts, &out, "name0")
+
+	if err != nil {
+		return *new(string), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(string)).(*string)
+
+	return out0, err
+
+}
+
+// Name0 is a free data retrieval call binding the contract method 0x06fdde03.
+//
+// Solidity: function name() view returns(string)
+func (_MetadataFacet *MetadataFacetSession) Name0() (string, error) {
+	return _MetadataFacet.Contract.Name0(&_MetadataFacet.CallOpts)
+}
+
+// Name0 is a free data retrieval call binding the contract method 0x06fdde03.
+//
+// Solidity: function name() view returns(string)
+func (_MetadataFacet *MetadataFacetCallerSession) Name0() (string, error) {
+	return _MetadataFacet.Contract.Name0(&_MetadataFacet.CallOpts)
+}
+
 // SupplyCap is a free data retrieval call binding the contract method 0x40b71c40.
 //
 // Solidity: function supplyCap(uint256 tokenId) view returns(uint256)
@@ -333,6 +364,37 @@ func (_MetadataFacet *MetadataFacetSession) Symbol(tokenId *big.Int) (string, er
 // Solidity: function symbol(uint256 tokenId) view returns(string)
 func (_MetadataFacet *MetadataFacetCallerSession) Symbol(tokenId *big.Int) (string, error) {
 	return _MetadataFacet.Contract.Symbol(&_MetadataFacet.CallOpts, tokenId)
+}
+
+// Symbol0 is a free data retrieval call binding the contract method 0x95d89b41.
+//
+// Solidity: function symbol() view returns(string)
+func (_MetadataFacet *MetadataFacetCaller) Symbol0(opts *bind.CallOpts) (string, error) {
+	var out []interface{}
+	err := _MetadataFacet.contract.Call(opts, &out, "symbol0")
+
+	if err != nil {
+		return *new(string), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(string)).(*string)
+
+	return out0, err
+
+}
+
+// Symbol0 is a free data retrieval call binding the contract method 0x95d89b41.
+//
+// Solidity: function symbol() view returns(string)
+func (_MetadataFacet *MetadataFacetSession) Symbol0() (string, error) {
+	return _MetadataFacet.Contract.Symbol0(&_MetadataFacet.CallOpts)
+}
+
+// Symbol0 is a free data retrieval call binding the contract method 0x95d89b41.
+//
+// Solidity: function symbol() view returns(string)
+func (_MetadataFacet *MetadataFacetCallerSession) Symbol0() (string, error) {
+	return _MetadataFacet.Contract.Symbol0(&_MetadataFacet.CallOpts)
 }
 
 // TokenInfo is a free data retrieval call binding the contract method 0xcc33c875.

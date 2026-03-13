@@ -37,7 +37,7 @@ type AssetConfig struct {
 	SupplyCap         *big.Int
 	TotalSupply       *big.Int
 	IdentityProfileId uint32
-	ComplianceModule  common.Address
+	ComplianceModules []common.Address
 	Issuer            common.Address
 	Paused            bool
 	Exists            bool
@@ -46,20 +46,19 @@ type AssetConfig struct {
 
 // IAssetManagerRegisterAssetParams is an auto generated low-level Go binding around an user-defined struct.
 type IAssetManagerRegisterAssetParams struct {
-	TokenId           *big.Int
 	Name              string
 	Symbol            string
 	Uri               string
 	SupplyCap         *big.Int
 	IdentityProfileId uint32
-	ComplianceModule  common.Address
+	ComplianceModules []common.Address
 	Issuer            common.Address
 	AllowedCountries  []uint16
 }
 
 // AssetManagerFacetMetaData contains all meta data concerning the AssetManagerFacet contract.
 var AssetManagerFacetMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"assetExists\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAssetConfig\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structAssetConfig\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"symbol\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"uri\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"supplyCap\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"totalSupply\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"identityProfileId\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"complianceModule\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"issuer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"paused\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"exists\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"allowedCountries\",\"type\":\"uint16[]\",\"internalType\":\"uint16[]\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRegisteredTokenIds\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerAsset\",\"inputs\":[{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIAssetManager.RegisterAssetParams\",\"components\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"symbol\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"uri\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"supplyCap\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"identityProfileId\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"complianceModule\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"issuer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"allowedCountries\",\"type\":\"uint16[]\",\"internalType\":\"uint16[]\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setAllowedCountries\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"countries\",\"type\":\"uint16[]\",\"internalType\":\"uint16[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setAssetUri\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"uri\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setComplianceModule\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"module\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setIdentityProfile\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"profileId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setIssuer\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"issuer\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setSupplyCap\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"cap\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"AssetConfigUpdated\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AssetRegistered\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"issuer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"profileId\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ComplianceModuleSet\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"module\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AssetManagerFacet__AlreadyRegistered\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"AssetManagerFacet__EmptyString\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AssetManagerFacet__NotRegistered\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"AssetManagerFacet__Unauthorized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AssetManagerFacet__ZeroAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"LibDiamond__OnlyOwner\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"addComplianceModule\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"module\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"assetExists\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAssetConfig\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structAssetConfig\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"symbol\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"uri\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"supplyCap\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"totalSupply\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"identityProfileId\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"complianceModules\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"issuer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"paused\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"exists\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"allowedCountries\",\"type\":\"uint16[]\",\"internalType\":\"uint16[]\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getComplianceModules\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRegisteredTokenIds\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"nextTokenId\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerAsset\",\"inputs\":[{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIAssetManager.RegisterAssetParams\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"symbol\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"uri\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"supplyCap\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"identityProfileId\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"complianceModules\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"issuer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"allowedCountries\",\"type\":\"uint16[]\",\"internalType\":\"uint16[]\"}]}],\"outputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeComplianceModule\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"module\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setAllowedCountries\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"countries\",\"type\":\"uint16[]\",\"internalType\":\"uint16[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setAssetUri\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"uri\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setComplianceModules\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"modules\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setIdentityProfile\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"profileId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setIssuer\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"issuer\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setSupplyCap\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"cap\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"AssetConfigUpdated\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AssetRegistered\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"issuer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"profileId\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ComplianceModuleAdded\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"module\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ComplianceModuleRemoved\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"module\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ComplianceModulesSet\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"modules\",\"type\":\"address[]\",\"indexed\":false,\"internalType\":\"address[]\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"URI\",\"inputs\":[{\"name\":\"value\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"id\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AssetManagerFacet__EmptyString\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AssetManagerFacet__ModuleAlreadyAdded\",\"inputs\":[{\"name\":\"module\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"AssetManagerFacet__ModuleNotFound\",\"inputs\":[{\"name\":\"module\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"AssetManagerFacet__NotRegistered\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"AssetManagerFacet__TooManyModules\",\"inputs\":[{\"name\":\"count\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"max\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"AssetManagerFacet__Unauthorized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"AssetManagerFacet__ZeroAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"LibDiamond__OnlyOwner\",\"inputs\":[]}]",
 }
 
 // AssetManagerFacetABI is the input ABI used to generate the binding from.
@@ -241,7 +240,7 @@ func (_AssetManagerFacet *AssetManagerFacetCallerSession) AssetExists(tokenId *b
 
 // GetAssetConfig is a free data retrieval call binding the contract method 0xde31ea9f.
 //
-// Solidity: function getAssetConfig(uint256 tokenId) view returns((string,string,string,uint256,uint256,uint32,address,address,bool,bool,uint16[]))
+// Solidity: function getAssetConfig(uint256 tokenId) view returns((string,string,string,uint256,uint256,uint32,address[],address,bool,bool,uint16[]))
 func (_AssetManagerFacet *AssetManagerFacetCaller) GetAssetConfig(opts *bind.CallOpts, tokenId *big.Int) (AssetConfig, error) {
 	var out []interface{}
 	err := _AssetManagerFacet.contract.Call(opts, &out, "getAssetConfig", tokenId)
@@ -258,16 +257,47 @@ func (_AssetManagerFacet *AssetManagerFacetCaller) GetAssetConfig(opts *bind.Cal
 
 // GetAssetConfig is a free data retrieval call binding the contract method 0xde31ea9f.
 //
-// Solidity: function getAssetConfig(uint256 tokenId) view returns((string,string,string,uint256,uint256,uint32,address,address,bool,bool,uint16[]))
+// Solidity: function getAssetConfig(uint256 tokenId) view returns((string,string,string,uint256,uint256,uint32,address[],address,bool,bool,uint16[]))
 func (_AssetManagerFacet *AssetManagerFacetSession) GetAssetConfig(tokenId *big.Int) (AssetConfig, error) {
 	return _AssetManagerFacet.Contract.GetAssetConfig(&_AssetManagerFacet.CallOpts, tokenId)
 }
 
 // GetAssetConfig is a free data retrieval call binding the contract method 0xde31ea9f.
 //
-// Solidity: function getAssetConfig(uint256 tokenId) view returns((string,string,string,uint256,uint256,uint32,address,address,bool,bool,uint16[]))
+// Solidity: function getAssetConfig(uint256 tokenId) view returns((string,string,string,uint256,uint256,uint32,address[],address,bool,bool,uint16[]))
 func (_AssetManagerFacet *AssetManagerFacetCallerSession) GetAssetConfig(tokenId *big.Int) (AssetConfig, error) {
 	return _AssetManagerFacet.Contract.GetAssetConfig(&_AssetManagerFacet.CallOpts, tokenId)
+}
+
+// GetComplianceModules is a free data retrieval call binding the contract method 0x71417690.
+//
+// Solidity: function getComplianceModules(uint256 tokenId) view returns(address[])
+func (_AssetManagerFacet *AssetManagerFacetCaller) GetComplianceModules(opts *bind.CallOpts, tokenId *big.Int) ([]common.Address, error) {
+	var out []interface{}
+	err := _AssetManagerFacet.contract.Call(opts, &out, "getComplianceModules", tokenId)
+
+	if err != nil {
+		return *new([]common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
+
+	return out0, err
+
+}
+
+// GetComplianceModules is a free data retrieval call binding the contract method 0x71417690.
+//
+// Solidity: function getComplianceModules(uint256 tokenId) view returns(address[])
+func (_AssetManagerFacet *AssetManagerFacetSession) GetComplianceModules(tokenId *big.Int) ([]common.Address, error) {
+	return _AssetManagerFacet.Contract.GetComplianceModules(&_AssetManagerFacet.CallOpts, tokenId)
+}
+
+// GetComplianceModules is a free data retrieval call binding the contract method 0x71417690.
+//
+// Solidity: function getComplianceModules(uint256 tokenId) view returns(address[])
+func (_AssetManagerFacet *AssetManagerFacetCallerSession) GetComplianceModules(tokenId *big.Int) ([]common.Address, error) {
+	return _AssetManagerFacet.Contract.GetComplianceModules(&_AssetManagerFacet.CallOpts, tokenId)
 }
 
 // GetRegisteredTokenIds is a free data retrieval call binding the contract method 0x1df49c25.
@@ -301,25 +331,98 @@ func (_AssetManagerFacet *AssetManagerFacetCallerSession) GetRegisteredTokenIds(
 	return _AssetManagerFacet.Contract.GetRegisteredTokenIds(&_AssetManagerFacet.CallOpts)
 }
 
-// RegisterAsset is a paid mutator transaction binding the contract method 0x60497bf6.
+// NextTokenId is a free data retrieval call binding the contract method 0x75794a3c.
 //
-// Solidity: function registerAsset((uint256,string,string,string,uint256,uint32,address,address,uint16[]) p) returns()
+// Solidity: function nextTokenId() view returns(uint256)
+func (_AssetManagerFacet *AssetManagerFacetCaller) NextTokenId(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _AssetManagerFacet.contract.Call(opts, &out, "nextTokenId")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// NextTokenId is a free data retrieval call binding the contract method 0x75794a3c.
+//
+// Solidity: function nextTokenId() view returns(uint256)
+func (_AssetManagerFacet *AssetManagerFacetSession) NextTokenId() (*big.Int, error) {
+	return _AssetManagerFacet.Contract.NextTokenId(&_AssetManagerFacet.CallOpts)
+}
+
+// NextTokenId is a free data retrieval call binding the contract method 0x75794a3c.
+//
+// Solidity: function nextTokenId() view returns(uint256)
+func (_AssetManagerFacet *AssetManagerFacetCallerSession) NextTokenId() (*big.Int, error) {
+	return _AssetManagerFacet.Contract.NextTokenId(&_AssetManagerFacet.CallOpts)
+}
+
+// AddComplianceModule is a paid mutator transaction binding the contract method 0x00c3169e.
+//
+// Solidity: function addComplianceModule(uint256 tokenId, address module) returns()
+func (_AssetManagerFacet *AssetManagerFacetTransactor) AddComplianceModule(opts *bind.TransactOpts, tokenId *big.Int, module common.Address) (*types.Transaction, error) {
+	return _AssetManagerFacet.contract.Transact(opts, "addComplianceModule", tokenId, module)
+}
+
+// AddComplianceModule is a paid mutator transaction binding the contract method 0x00c3169e.
+//
+// Solidity: function addComplianceModule(uint256 tokenId, address module) returns()
+func (_AssetManagerFacet *AssetManagerFacetSession) AddComplianceModule(tokenId *big.Int, module common.Address) (*types.Transaction, error) {
+	return _AssetManagerFacet.Contract.AddComplianceModule(&_AssetManagerFacet.TransactOpts, tokenId, module)
+}
+
+// AddComplianceModule is a paid mutator transaction binding the contract method 0x00c3169e.
+//
+// Solidity: function addComplianceModule(uint256 tokenId, address module) returns()
+func (_AssetManagerFacet *AssetManagerFacetTransactorSession) AddComplianceModule(tokenId *big.Int, module common.Address) (*types.Transaction, error) {
+	return _AssetManagerFacet.Contract.AddComplianceModule(&_AssetManagerFacet.TransactOpts, tokenId, module)
+}
+
+// RegisterAsset is a paid mutator transaction binding the contract method 0xee48c026.
+//
+// Solidity: function registerAsset((string,string,string,uint256,uint32,address[],address,uint16[]) p) returns(uint256 tokenId)
 func (_AssetManagerFacet *AssetManagerFacetTransactor) RegisterAsset(opts *bind.TransactOpts, p IAssetManagerRegisterAssetParams) (*types.Transaction, error) {
 	return _AssetManagerFacet.contract.Transact(opts, "registerAsset", p)
 }
 
-// RegisterAsset is a paid mutator transaction binding the contract method 0x60497bf6.
+// RegisterAsset is a paid mutator transaction binding the contract method 0xee48c026.
 //
-// Solidity: function registerAsset((uint256,string,string,string,uint256,uint32,address,address,uint16[]) p) returns()
+// Solidity: function registerAsset((string,string,string,uint256,uint32,address[],address,uint16[]) p) returns(uint256 tokenId)
 func (_AssetManagerFacet *AssetManagerFacetSession) RegisterAsset(p IAssetManagerRegisterAssetParams) (*types.Transaction, error) {
 	return _AssetManagerFacet.Contract.RegisterAsset(&_AssetManagerFacet.TransactOpts, p)
 }
 
-// RegisterAsset is a paid mutator transaction binding the contract method 0x60497bf6.
+// RegisterAsset is a paid mutator transaction binding the contract method 0xee48c026.
 //
-// Solidity: function registerAsset((uint256,string,string,string,uint256,uint32,address,address,uint16[]) p) returns()
+// Solidity: function registerAsset((string,string,string,uint256,uint32,address[],address,uint16[]) p) returns(uint256 tokenId)
 func (_AssetManagerFacet *AssetManagerFacetTransactorSession) RegisterAsset(p IAssetManagerRegisterAssetParams) (*types.Transaction, error) {
 	return _AssetManagerFacet.Contract.RegisterAsset(&_AssetManagerFacet.TransactOpts, p)
+}
+
+// RemoveComplianceModule is a paid mutator transaction binding the contract method 0x17e648d4.
+//
+// Solidity: function removeComplianceModule(uint256 tokenId, address module) returns()
+func (_AssetManagerFacet *AssetManagerFacetTransactor) RemoveComplianceModule(opts *bind.TransactOpts, tokenId *big.Int, module common.Address) (*types.Transaction, error) {
+	return _AssetManagerFacet.contract.Transact(opts, "removeComplianceModule", tokenId, module)
+}
+
+// RemoveComplianceModule is a paid mutator transaction binding the contract method 0x17e648d4.
+//
+// Solidity: function removeComplianceModule(uint256 tokenId, address module) returns()
+func (_AssetManagerFacet *AssetManagerFacetSession) RemoveComplianceModule(tokenId *big.Int, module common.Address) (*types.Transaction, error) {
+	return _AssetManagerFacet.Contract.RemoveComplianceModule(&_AssetManagerFacet.TransactOpts, tokenId, module)
+}
+
+// RemoveComplianceModule is a paid mutator transaction binding the contract method 0x17e648d4.
+//
+// Solidity: function removeComplianceModule(uint256 tokenId, address module) returns()
+func (_AssetManagerFacet *AssetManagerFacetTransactorSession) RemoveComplianceModule(tokenId *big.Int, module common.Address) (*types.Transaction, error) {
+	return _AssetManagerFacet.Contract.RemoveComplianceModule(&_AssetManagerFacet.TransactOpts, tokenId, module)
 }
 
 // SetAllowedCountries is a paid mutator transaction binding the contract method 0x2445cbc3.
@@ -364,25 +467,25 @@ func (_AssetManagerFacet *AssetManagerFacetTransactorSession) SetAssetUri(tokenI
 	return _AssetManagerFacet.Contract.SetAssetUri(&_AssetManagerFacet.TransactOpts, tokenId, uri)
 }
 
-// SetComplianceModule is a paid mutator transaction binding the contract method 0xb772ce42.
+// SetComplianceModules is a paid mutator transaction binding the contract method 0x74f691e2.
 //
-// Solidity: function setComplianceModule(uint256 tokenId, address module) returns()
-func (_AssetManagerFacet *AssetManagerFacetTransactor) SetComplianceModule(opts *bind.TransactOpts, tokenId *big.Int, module common.Address) (*types.Transaction, error) {
-	return _AssetManagerFacet.contract.Transact(opts, "setComplianceModule", tokenId, module)
+// Solidity: function setComplianceModules(uint256 tokenId, address[] modules) returns()
+func (_AssetManagerFacet *AssetManagerFacetTransactor) SetComplianceModules(opts *bind.TransactOpts, tokenId *big.Int, modules []common.Address) (*types.Transaction, error) {
+	return _AssetManagerFacet.contract.Transact(opts, "setComplianceModules", tokenId, modules)
 }
 
-// SetComplianceModule is a paid mutator transaction binding the contract method 0xb772ce42.
+// SetComplianceModules is a paid mutator transaction binding the contract method 0x74f691e2.
 //
-// Solidity: function setComplianceModule(uint256 tokenId, address module) returns()
-func (_AssetManagerFacet *AssetManagerFacetSession) SetComplianceModule(tokenId *big.Int, module common.Address) (*types.Transaction, error) {
-	return _AssetManagerFacet.Contract.SetComplianceModule(&_AssetManagerFacet.TransactOpts, tokenId, module)
+// Solidity: function setComplianceModules(uint256 tokenId, address[] modules) returns()
+func (_AssetManagerFacet *AssetManagerFacetSession) SetComplianceModules(tokenId *big.Int, modules []common.Address) (*types.Transaction, error) {
+	return _AssetManagerFacet.Contract.SetComplianceModules(&_AssetManagerFacet.TransactOpts, tokenId, modules)
 }
 
-// SetComplianceModule is a paid mutator transaction binding the contract method 0xb772ce42.
+// SetComplianceModules is a paid mutator transaction binding the contract method 0x74f691e2.
 //
-// Solidity: function setComplianceModule(uint256 tokenId, address module) returns()
-func (_AssetManagerFacet *AssetManagerFacetTransactorSession) SetComplianceModule(tokenId *big.Int, module common.Address) (*types.Transaction, error) {
-	return _AssetManagerFacet.Contract.SetComplianceModule(&_AssetManagerFacet.TransactOpts, tokenId, module)
+// Solidity: function setComplianceModules(uint256 tokenId, address[] modules) returns()
+func (_AssetManagerFacet *AssetManagerFacetTransactorSession) SetComplianceModules(tokenId *big.Int, modules []common.Address) (*types.Transaction, error) {
+	return _AssetManagerFacet.Contract.SetComplianceModules(&_AssetManagerFacet.TransactOpts, tokenId, modules)
 }
 
 // SetIdentityProfile is a paid mutator transaction binding the contract method 0x3590bd78.
@@ -746,9 +849,9 @@ func (_AssetManagerFacet *AssetManagerFacetFilterer) ParseAssetRegistered(log ty
 	return event, nil
 }
 
-// AssetManagerFacetComplianceModuleSetIterator is returned from FilterComplianceModuleSet and is used to iterate over the raw logs and unpacked data for ComplianceModuleSet events raised by the AssetManagerFacet contract.
-type AssetManagerFacetComplianceModuleSetIterator struct {
-	Event *AssetManagerFacetComplianceModuleSet // Event containing the contract specifics and raw log
+// AssetManagerFacetComplianceModuleAddedIterator is returned from FilterComplianceModuleAdded and is used to iterate over the raw logs and unpacked data for ComplianceModuleAdded events raised by the AssetManagerFacet contract.
+type AssetManagerFacetComplianceModuleAddedIterator struct {
+	Event *AssetManagerFacetComplianceModuleAdded // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -762,7 +865,7 @@ type AssetManagerFacetComplianceModuleSetIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *AssetManagerFacetComplianceModuleSetIterator) Next() bool {
+func (it *AssetManagerFacetComplianceModuleAddedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -771,7 +874,7 @@ func (it *AssetManagerFacetComplianceModuleSetIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(AssetManagerFacetComplianceModuleSet)
+			it.Event = new(AssetManagerFacetComplianceModuleAdded)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -786,7 +889,7 @@ func (it *AssetManagerFacetComplianceModuleSetIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(AssetManagerFacetComplianceModuleSet)
+		it.Event = new(AssetManagerFacetComplianceModuleAdded)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -802,28 +905,28 @@ func (it *AssetManagerFacetComplianceModuleSetIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *AssetManagerFacetComplianceModuleSetIterator) Error() error {
+func (it *AssetManagerFacetComplianceModuleAddedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *AssetManagerFacetComplianceModuleSetIterator) Close() error {
+func (it *AssetManagerFacetComplianceModuleAddedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// AssetManagerFacetComplianceModuleSet represents a ComplianceModuleSet event raised by the AssetManagerFacet contract.
-type AssetManagerFacetComplianceModuleSet struct {
+// AssetManagerFacetComplianceModuleAdded represents a ComplianceModuleAdded event raised by the AssetManagerFacet contract.
+type AssetManagerFacetComplianceModuleAdded struct {
 	TokenId *big.Int
 	Module  common.Address
 	Raw     types.Log // Blockchain specific contextual infos
 }
 
-// FilterComplianceModuleSet is a free log retrieval operation binding the contract event 0x4451d17cbbe4b0f7599ee84c19290b93a443af493bb7f5009502ad6ee986ad80.
+// FilterComplianceModuleAdded is a free log retrieval operation binding the contract event 0xabcc35061552383bd7e261c95e3528941e4c157881d874c30daf186176e110a9.
 //
-// Solidity: event ComplianceModuleSet(uint256 indexed tokenId, address indexed module)
-func (_AssetManagerFacet *AssetManagerFacetFilterer) FilterComplianceModuleSet(opts *bind.FilterOpts, tokenId []*big.Int, module []common.Address) (*AssetManagerFacetComplianceModuleSetIterator, error) {
+// Solidity: event ComplianceModuleAdded(uint256 indexed tokenId, address indexed module)
+func (_AssetManagerFacet *AssetManagerFacetFilterer) FilterComplianceModuleAdded(opts *bind.FilterOpts, tokenId []*big.Int, module []common.Address) (*AssetManagerFacetComplianceModuleAddedIterator, error) {
 
 	var tokenIdRule []interface{}
 	for _, tokenIdItem := range tokenId {
@@ -834,17 +937,17 @@ func (_AssetManagerFacet *AssetManagerFacetFilterer) FilterComplianceModuleSet(o
 		moduleRule = append(moduleRule, moduleItem)
 	}
 
-	logs, sub, err := _AssetManagerFacet.contract.FilterLogs(opts, "ComplianceModuleSet", tokenIdRule, moduleRule)
+	logs, sub, err := _AssetManagerFacet.contract.FilterLogs(opts, "ComplianceModuleAdded", tokenIdRule, moduleRule)
 	if err != nil {
 		return nil, err
 	}
-	return &AssetManagerFacetComplianceModuleSetIterator{contract: _AssetManagerFacet.contract, event: "ComplianceModuleSet", logs: logs, sub: sub}, nil
+	return &AssetManagerFacetComplianceModuleAddedIterator{contract: _AssetManagerFacet.contract, event: "ComplianceModuleAdded", logs: logs, sub: sub}, nil
 }
 
-// WatchComplianceModuleSet is a free log subscription operation binding the contract event 0x4451d17cbbe4b0f7599ee84c19290b93a443af493bb7f5009502ad6ee986ad80.
+// WatchComplianceModuleAdded is a free log subscription operation binding the contract event 0xabcc35061552383bd7e261c95e3528941e4c157881d874c30daf186176e110a9.
 //
-// Solidity: event ComplianceModuleSet(uint256 indexed tokenId, address indexed module)
-func (_AssetManagerFacet *AssetManagerFacetFilterer) WatchComplianceModuleSet(opts *bind.WatchOpts, sink chan<- *AssetManagerFacetComplianceModuleSet, tokenId []*big.Int, module []common.Address) (event.Subscription, error) {
+// Solidity: event ComplianceModuleAdded(uint256 indexed tokenId, address indexed module)
+func (_AssetManagerFacet *AssetManagerFacetFilterer) WatchComplianceModuleAdded(opts *bind.WatchOpts, sink chan<- *AssetManagerFacetComplianceModuleAdded, tokenId []*big.Int, module []common.Address) (event.Subscription, error) {
 
 	var tokenIdRule []interface{}
 	for _, tokenIdItem := range tokenId {
@@ -855,7 +958,7 @@ func (_AssetManagerFacet *AssetManagerFacetFilterer) WatchComplianceModuleSet(op
 		moduleRule = append(moduleRule, moduleItem)
 	}
 
-	logs, sub, err := _AssetManagerFacet.contract.WatchLogs(opts, "ComplianceModuleSet", tokenIdRule, moduleRule)
+	logs, sub, err := _AssetManagerFacet.contract.WatchLogs(opts, "ComplianceModuleAdded", tokenIdRule, moduleRule)
 	if err != nil {
 		return nil, err
 	}
@@ -865,8 +968,8 @@ func (_AssetManagerFacet *AssetManagerFacetFilterer) WatchComplianceModuleSet(op
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(AssetManagerFacetComplianceModuleSet)
-				if err := _AssetManagerFacet.contract.UnpackLog(event, "ComplianceModuleSet", log); err != nil {
+				event := new(AssetManagerFacetComplianceModuleAdded)
+				if err := _AssetManagerFacet.contract.UnpackLog(event, "ComplianceModuleAdded", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -887,12 +990,455 @@ func (_AssetManagerFacet *AssetManagerFacetFilterer) WatchComplianceModuleSet(op
 	}), nil
 }
 
-// ParseComplianceModuleSet is a log parse operation binding the contract event 0x4451d17cbbe4b0f7599ee84c19290b93a443af493bb7f5009502ad6ee986ad80.
+// ParseComplianceModuleAdded is a log parse operation binding the contract event 0xabcc35061552383bd7e261c95e3528941e4c157881d874c30daf186176e110a9.
 //
-// Solidity: event ComplianceModuleSet(uint256 indexed tokenId, address indexed module)
-func (_AssetManagerFacet *AssetManagerFacetFilterer) ParseComplianceModuleSet(log types.Log) (*AssetManagerFacetComplianceModuleSet, error) {
-	event := new(AssetManagerFacetComplianceModuleSet)
-	if err := _AssetManagerFacet.contract.UnpackLog(event, "ComplianceModuleSet", log); err != nil {
+// Solidity: event ComplianceModuleAdded(uint256 indexed tokenId, address indexed module)
+func (_AssetManagerFacet *AssetManagerFacetFilterer) ParseComplianceModuleAdded(log types.Log) (*AssetManagerFacetComplianceModuleAdded, error) {
+	event := new(AssetManagerFacetComplianceModuleAdded)
+	if err := _AssetManagerFacet.contract.UnpackLog(event, "ComplianceModuleAdded", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// AssetManagerFacetComplianceModuleRemovedIterator is returned from FilterComplianceModuleRemoved and is used to iterate over the raw logs and unpacked data for ComplianceModuleRemoved events raised by the AssetManagerFacet contract.
+type AssetManagerFacetComplianceModuleRemovedIterator struct {
+	Event *AssetManagerFacetComplianceModuleRemoved // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *AssetManagerFacetComplianceModuleRemovedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AssetManagerFacetComplianceModuleRemoved)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(AssetManagerFacetComplianceModuleRemoved)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *AssetManagerFacetComplianceModuleRemovedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *AssetManagerFacetComplianceModuleRemovedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// AssetManagerFacetComplianceModuleRemoved represents a ComplianceModuleRemoved event raised by the AssetManagerFacet contract.
+type AssetManagerFacetComplianceModuleRemoved struct {
+	TokenId *big.Int
+	Module  common.Address
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterComplianceModuleRemoved is a free log retrieval operation binding the contract event 0x05c5c1bbcf90a4dce5c8a68fee0b15a588bcb04538a4e1c3ae42c7174202946d.
+//
+// Solidity: event ComplianceModuleRemoved(uint256 indexed tokenId, address indexed module)
+func (_AssetManagerFacet *AssetManagerFacetFilterer) FilterComplianceModuleRemoved(opts *bind.FilterOpts, tokenId []*big.Int, module []common.Address) (*AssetManagerFacetComplianceModuleRemovedIterator, error) {
+
+	var tokenIdRule []interface{}
+	for _, tokenIdItem := range tokenId {
+		tokenIdRule = append(tokenIdRule, tokenIdItem)
+	}
+	var moduleRule []interface{}
+	for _, moduleItem := range module {
+		moduleRule = append(moduleRule, moduleItem)
+	}
+
+	logs, sub, err := _AssetManagerFacet.contract.FilterLogs(opts, "ComplianceModuleRemoved", tokenIdRule, moduleRule)
+	if err != nil {
+		return nil, err
+	}
+	return &AssetManagerFacetComplianceModuleRemovedIterator{contract: _AssetManagerFacet.contract, event: "ComplianceModuleRemoved", logs: logs, sub: sub}, nil
+}
+
+// WatchComplianceModuleRemoved is a free log subscription operation binding the contract event 0x05c5c1bbcf90a4dce5c8a68fee0b15a588bcb04538a4e1c3ae42c7174202946d.
+//
+// Solidity: event ComplianceModuleRemoved(uint256 indexed tokenId, address indexed module)
+func (_AssetManagerFacet *AssetManagerFacetFilterer) WatchComplianceModuleRemoved(opts *bind.WatchOpts, sink chan<- *AssetManagerFacetComplianceModuleRemoved, tokenId []*big.Int, module []common.Address) (event.Subscription, error) {
+
+	var tokenIdRule []interface{}
+	for _, tokenIdItem := range tokenId {
+		tokenIdRule = append(tokenIdRule, tokenIdItem)
+	}
+	var moduleRule []interface{}
+	for _, moduleItem := range module {
+		moduleRule = append(moduleRule, moduleItem)
+	}
+
+	logs, sub, err := _AssetManagerFacet.contract.WatchLogs(opts, "ComplianceModuleRemoved", tokenIdRule, moduleRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(AssetManagerFacetComplianceModuleRemoved)
+				if err := _AssetManagerFacet.contract.UnpackLog(event, "ComplianceModuleRemoved", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseComplianceModuleRemoved is a log parse operation binding the contract event 0x05c5c1bbcf90a4dce5c8a68fee0b15a588bcb04538a4e1c3ae42c7174202946d.
+//
+// Solidity: event ComplianceModuleRemoved(uint256 indexed tokenId, address indexed module)
+func (_AssetManagerFacet *AssetManagerFacetFilterer) ParseComplianceModuleRemoved(log types.Log) (*AssetManagerFacetComplianceModuleRemoved, error) {
+	event := new(AssetManagerFacetComplianceModuleRemoved)
+	if err := _AssetManagerFacet.contract.UnpackLog(event, "ComplianceModuleRemoved", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// AssetManagerFacetComplianceModulesSetIterator is returned from FilterComplianceModulesSet and is used to iterate over the raw logs and unpacked data for ComplianceModulesSet events raised by the AssetManagerFacet contract.
+type AssetManagerFacetComplianceModulesSetIterator struct {
+	Event *AssetManagerFacetComplianceModulesSet // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *AssetManagerFacetComplianceModulesSetIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AssetManagerFacetComplianceModulesSet)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(AssetManagerFacetComplianceModulesSet)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *AssetManagerFacetComplianceModulesSetIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *AssetManagerFacetComplianceModulesSetIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// AssetManagerFacetComplianceModulesSet represents a ComplianceModulesSet event raised by the AssetManagerFacet contract.
+type AssetManagerFacetComplianceModulesSet struct {
+	TokenId *big.Int
+	Modules []common.Address
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterComplianceModulesSet is a free log retrieval operation binding the contract event 0xa827c786814c67851536e5bf50f965c6c5f3799aea5a8674ef22641d3897dab5.
+//
+// Solidity: event ComplianceModulesSet(uint256 indexed tokenId, address[] modules)
+func (_AssetManagerFacet *AssetManagerFacetFilterer) FilterComplianceModulesSet(opts *bind.FilterOpts, tokenId []*big.Int) (*AssetManagerFacetComplianceModulesSetIterator, error) {
+
+	var tokenIdRule []interface{}
+	for _, tokenIdItem := range tokenId {
+		tokenIdRule = append(tokenIdRule, tokenIdItem)
+	}
+
+	logs, sub, err := _AssetManagerFacet.contract.FilterLogs(opts, "ComplianceModulesSet", tokenIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return &AssetManagerFacetComplianceModulesSetIterator{contract: _AssetManagerFacet.contract, event: "ComplianceModulesSet", logs: logs, sub: sub}, nil
+}
+
+// WatchComplianceModulesSet is a free log subscription operation binding the contract event 0xa827c786814c67851536e5bf50f965c6c5f3799aea5a8674ef22641d3897dab5.
+//
+// Solidity: event ComplianceModulesSet(uint256 indexed tokenId, address[] modules)
+func (_AssetManagerFacet *AssetManagerFacetFilterer) WatchComplianceModulesSet(opts *bind.WatchOpts, sink chan<- *AssetManagerFacetComplianceModulesSet, tokenId []*big.Int) (event.Subscription, error) {
+
+	var tokenIdRule []interface{}
+	for _, tokenIdItem := range tokenId {
+		tokenIdRule = append(tokenIdRule, tokenIdItem)
+	}
+
+	logs, sub, err := _AssetManagerFacet.contract.WatchLogs(opts, "ComplianceModulesSet", tokenIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(AssetManagerFacetComplianceModulesSet)
+				if err := _AssetManagerFacet.contract.UnpackLog(event, "ComplianceModulesSet", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseComplianceModulesSet is a log parse operation binding the contract event 0xa827c786814c67851536e5bf50f965c6c5f3799aea5a8674ef22641d3897dab5.
+//
+// Solidity: event ComplianceModulesSet(uint256 indexed tokenId, address[] modules)
+func (_AssetManagerFacet *AssetManagerFacetFilterer) ParseComplianceModulesSet(log types.Log) (*AssetManagerFacetComplianceModulesSet, error) {
+	event := new(AssetManagerFacetComplianceModulesSet)
+	if err := _AssetManagerFacet.contract.UnpackLog(event, "ComplianceModulesSet", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// AssetManagerFacetURIIterator is returned from FilterURI and is used to iterate over the raw logs and unpacked data for URI events raised by the AssetManagerFacet contract.
+type AssetManagerFacetURIIterator struct {
+	Event *AssetManagerFacetURI // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *AssetManagerFacetURIIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AssetManagerFacetURI)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(AssetManagerFacetURI)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *AssetManagerFacetURIIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *AssetManagerFacetURIIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// AssetManagerFacetURI represents a URI event raised by the AssetManagerFacet contract.
+type AssetManagerFacetURI struct {
+	Value string
+	Id    *big.Int
+	Raw   types.Log // Blockchain specific contextual infos
+}
+
+// FilterURI is a free log retrieval operation binding the contract event 0x6bb7ff708619ba0610cba295a58592e0451dee2622938c8755667688daf3529b.
+//
+// Solidity: event URI(string value, uint256 indexed id)
+func (_AssetManagerFacet *AssetManagerFacetFilterer) FilterURI(opts *bind.FilterOpts, id []*big.Int) (*AssetManagerFacetURIIterator, error) {
+
+	var idRule []interface{}
+	for _, idItem := range id {
+		idRule = append(idRule, idItem)
+	}
+
+	logs, sub, err := _AssetManagerFacet.contract.FilterLogs(opts, "URI", idRule)
+	if err != nil {
+		return nil, err
+	}
+	return &AssetManagerFacetURIIterator{contract: _AssetManagerFacet.contract, event: "URI", logs: logs, sub: sub}, nil
+}
+
+// WatchURI is a free log subscription operation binding the contract event 0x6bb7ff708619ba0610cba295a58592e0451dee2622938c8755667688daf3529b.
+//
+// Solidity: event URI(string value, uint256 indexed id)
+func (_AssetManagerFacet *AssetManagerFacetFilterer) WatchURI(opts *bind.WatchOpts, sink chan<- *AssetManagerFacetURI, id []*big.Int) (event.Subscription, error) {
+
+	var idRule []interface{}
+	for _, idItem := range id {
+		idRule = append(idRule, idItem)
+	}
+
+	logs, sub, err := _AssetManagerFacet.contract.WatchLogs(opts, "URI", idRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(AssetManagerFacetURI)
+				if err := _AssetManagerFacet.contract.UnpackLog(event, "URI", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseURI is a log parse operation binding the contract event 0x6bb7ff708619ba0610cba295a58592e0451dee2622938c8755667688daf3529b.
+//
+// Solidity: event URI(string value, uint256 indexed id)
+func (_AssetManagerFacet *AssetManagerFacetFilterer) ParseURI(log types.Log) (*AssetManagerFacetURI, error) {
+	event := new(AssetManagerFacetURI)
+	if err := _AssetManagerFacet.contract.UnpackLog(event, "URI", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
