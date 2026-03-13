@@ -19,6 +19,7 @@ artifacts/
 typechain-types/
 lcov.info
 coverage/
+reports/
 
 # ──────────────────────────────────────────────
 # Node / pnpm
