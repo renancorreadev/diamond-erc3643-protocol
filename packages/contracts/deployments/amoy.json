@@ -1,0 +1,139 @@
+{
+  "network": "Polygon Amoy Testnet",
+  "chainId": 80002,
+  "deployer": "0xB40061C7bf8394eb130Fcb5EA06868064593BFAa",
+  "deployedAt": "2026-03-12",
+  "blockExplorer": "https://amoy.polygonscan.com",
+  "contracts": {
+    "Diamond": {
+      "address": "0xAb07CEf1BEeDBb30F5795418c79879794b31C521",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0xAb07CEf1BEeDBb30F5795418c79879794b31C521"
+    },
+    "DiamondCutFacet": {
+      "address": "0x499b99F9516be8a363c7923e57d8dab2E63fC0D9",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0x499b99F9516be8a363c7923e57d8dab2E63fC0D9"
+    },
+    "DiamondLoupeFacet": {
+      "address": "0x92Da52B23380A68f4565cD3f5aECAb31FC56eff1",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0x92Da52B23380A68f4565cD3f5aECAb31FC56eff1"
+    },
+    "OwnershipFacet": {
+      "address": "0x97CBfcF2662c81fa93EcdC1A6e82045980061427",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0x97CBfcF2662c81fa93EcdC1A6e82045980061427"
+    },
+    "AccessControlFacet": {
+      "address": "0xD097fe5983a52e9e28a504375285e8Ca124C880B",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0xD097fe5983a52e9e28a504375285e8Ca124C880B"
+    },
+    "PauseFacet": {
+      "address": "0xEF310f4bD869e9711c45022B3A8Da074A003FF0C",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0xEF310f4bD869e9711c45022B3A8Da074A003FF0C"
+    },
+    "EmergencyFacet": {
+      "address": "0x67561FF38AF20f93E3e835B5F02D4545E30266C6",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0x67561FF38AF20f93E3e835B5F02D4545E30266C6"
+    },
+    "FreezeFacet": {
+      "address": "0xdfd98C7b28CCcaE14b48612c4239B36E78094F49",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0xdfd98C7b28CCcaE14b48612c4239B36E78094F49"
+    },
+    "RecoveryFacet": {
+      "address": "0xA1CBD518D0b4C7850099b2AA1a26889739c32B5a",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0xA1CBD518D0b4C7850099b2AA1a26889739c32B5a"
+    },
+    "AssetManagerFacet": {
+      "address": "0x9BDaEDa3A0Aaec41cF08f00fD55a5c178ea3d7f1",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0x9BDaEDa3A0Aaec41cF08f00fD55a5c178ea3d7f1"
+    },
+    "ClaimTopicsFacet": {
+      "address": "0xcE23BcDc538430aF96745968dBc874C1daB8C824",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0xcE23BcDc538430aF96745968dBc874C1daB8C824"
+    },
+    "TrustedIssuerFacet": {
+      "address": "0x578550bA4fAe186Cd7614862De3Ec8092F7Db5Db",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0x578550bA4fAe186Cd7614862De3Ec8092F7Db5Db"
+    },
+    "IdentityRegistryFacet": {
+      "address": "0x514f8C0c8b9C5Dd3BF78AAB95c162a32eA653522",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0x514f8C0c8b9C5Dd3BF78AAB95c162a32eA653522"
+    },
+    "ComplianceRouterFacet": {
+      "address": "0x09BCf4BafA1a4943024E6A8b9ffc55AC539EEb13",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0x09BCf4BafA1a4943024E6A8b9ffc55AC539EEb13"
+    },
+    "ERC1155Facet": {
+      "address": "0x2EF1aD8C024114874e10aF26b9212A27eb03FA70",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0x2EF1aD8C024114874e10aF26b9212A27eb03FA70"
+    },
+    "SupplyFacet": {
+      "address": "0xFCF4532842a6AddA939A9283E6D68a97232C8eC2",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0xFCF4532842a6AddA939A9283E6D68a97232C8eC2"
+    },
+    "MetadataFacet": {
+      "address": "0x7BeaC0bEA5687191c41Bb39E5C8c708a13f49Ad7",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0x7BeaC0bEA5687191c41Bb39E5C8c708a13f49Ad7"
+    },
+    "SnapshotFacet": {
+      "address": "0xd11381ea9b24b90b16671F04727B2D39793d4C76",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0xd11381ea9b24b90b16671F04727B2D39793d4C76"
+    },
+    "DividendFacet": {
+      "address": "0xD08d0D88CA607Bacc3945532158Ec8b52E397190",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0xD08d0D88CA607Bacc3945532158Ec8b52E397190"
+    },
+    "AssetGroupFacet": {
+      "address": "0xBF5753C300796f7D78227E0BD1f4A2FbAD3e9C9c",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0xBF5753C300796f7D78227E0BD1f4A2FbAD3e9C9c"
+    },
+    "DiamondInit": {
+      "address": "0x663217FCFC5807636b1201b413921Ab01b1C6Be0",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0x663217FCFC5807636b1201b413921Ab01b1C6Be0"
+    },
+    "EIP1967Init": {
+      "address": "0xeF4c9f66260B5846487Cfd9416FCE3ad27115513",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0xeF4c9f66260B5846487Cfd9416FCE3ad27115513"
+    },
+    "DiamondABI": {
+      "address": "0x5Cc6aF3a9DeF71326de4c0DfE9Da9bb7E1B0bd55",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0x5Cc6aF3a9DeF71326de4c0DfE9Da9bb7E1B0bd55"
+    },
+    "CountryRestrictModule": {
+      "address": "0x0c15e06c36b07E44aEe6D49a75554bc7bfFa50D2",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0x0c15e06c36b07E44aEe6D49a75554bc7bfFa50D2"
+    },
+    "MaxBalanceModule": {
+      "address": "0x4B3cCd1F7BB1aF5F41b73e7fE3010023FcD89B44",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0x4B3cCd1F7BB1aF5F41b73e7fE3010023FcD89B44"
+    },
+    "MaxHoldersModule": {
+      "address": "0xC40Bf7bb339DD4485b1F5c3c0C5FE78DACD9999a",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0xC40Bf7bb339DD4485b1F5c3c0C5FE78DACD9999a"
+    }
+  }
+}
