@@ -197,6 +197,38 @@ diamond-erc3643/
 └── package.json
 ```
 
+## Deployments
+
+### Polygon Amoy Testnet (Chain ID: 80002)
+
+| Contract | Address | Verified |
+|----------|---------|----------|
+| **Diamond (Proxy)** | [`0xc9f624Bc1B3e9514b9d7C112408cf05AdC886377`](https://amoy.polygonscan.com/address/0xc9f624Bc1B3e9514b9d7C112408cf05AdC886377) | ✅ |
+| DiamondCutFacet | [`0x8E1688C6876d7f21333eedFFEdde9E0e86084484`](https://amoy.polygonscan.com/address/0x8E1688C6876d7f21333eedFFEdde9E0e86084484) | ✅ |
+| DiamondLoupeFacet | [`0x4A208213Ae4251601e585E04F4257DC1f670FCB2`](https://amoy.polygonscan.com/address/0x4A208213Ae4251601e585E04F4257DC1f670FCB2) | ✅ |
+| OwnershipFacet | [`0xDB79eb2be53a34f1A05c43Cb170fe38F68bAED95`](https://amoy.polygonscan.com/address/0xDB79eb2be53a34f1A05c43Cb170fe38F68bAED95) | ✅ |
+| AccessControlFacet | [`0xB4701fc30F6bb5F89F20747d590f9A07AAccD0ad`](https://amoy.polygonscan.com/address/0xB4701fc30F6bb5F89F20747d590f9A07AAccD0ad) | ✅ |
+| PauseFacet | [`0x4022769bb2dC8923e82ecAcB1F535d93449eA22f`](https://amoy.polygonscan.com/address/0x4022769bb2dC8923e82ecAcB1F535d93449eA22f) | ✅ |
+| EmergencyFacet | [`0x42E8Cc7997A5AE3114Ed49377810231cF1463f85`](https://amoy.polygonscan.com/address/0x42E8Cc7997A5AE3114Ed49377810231cF1463f85) | ✅ |
+| FreezeFacet | [`0xF8Fc8e20dCB762F3883FDE8dc939eaAE106BE1Bd`](https://amoy.polygonscan.com/address/0xF8Fc8e20dCB762F3883FDE8dc939eaAE106BE1Bd) | ✅ |
+| RecoveryFacet | [`0x1f2C63bE9c1254a0360b6e1f9f5e74a09302D751`](https://amoy.polygonscan.com/address/0x1f2C63bE9c1254a0360b6e1f9f5e74a09302D751) | ✅ |
+| AssetManagerFacet | [`0x3D83f55026cD1D1F4600f80746CD562C3d2E972a`](https://amoy.polygonscan.com/address/0x3D83f55026cD1D1F4600f80746CD562C3d2E972a) | ✅ |
+| ClaimTopicsFacet | [`0x430702765a96093FA7CDDae5CCB003B663b1873B`](https://amoy.polygonscan.com/address/0x430702765a96093FA7CDDae5CCB003B663b1873B) | ✅ |
+| TrustedIssuerFacet | [`0x4Bf670b0C273f9D2484C58c563D99608941BA061`](https://amoy.polygonscan.com/address/0x4Bf670b0C273f9D2484C58c563D99608941BA061) | ✅ |
+| IdentityRegistryFacet | [`0x6311Bc588d9459E7609FaF51788334e4b79D465b`](https://amoy.polygonscan.com/address/0x6311Bc588d9459E7609FaF51788334e4b79D465b) | ✅ |
+| ComplianceRouterFacet | [`0x7831b77892dc5Bd64787A827EcAb33E3F741378A`](https://amoy.polygonscan.com/address/0x7831b77892dc5Bd64787A827EcAb33E3F741378A) | ✅ |
+| ERC1155Facet | [`0x0593d2B0D30F44659fa74F2ffb14C5B76d14892d`](https://amoy.polygonscan.com/address/0x0593d2B0D30F44659fa74F2ffb14C5B76d14892d) | ✅ |
+| SupplyFacet | [`0x30F5C5fF44307558bef9980ad27a526C7c571d85`](https://amoy.polygonscan.com/address/0x30F5C5fF44307558bef9980ad27a526C7c571d85) | ✅ |
+| MetadataFacet | [`0xA96C679beaffAdf01284b8C3B69adC950F2A9A71`](https://amoy.polygonscan.com/address/0xA96C679beaffAdf01284b8C3B69adC950F2A9A71) | ✅ |
+| SnapshotFacet | [`0xa039bEcAb71986d0aFA56F4622d13Bc3109750DF`](https://amoy.polygonscan.com/address/0xa039bEcAb71986d0aFA56F4622d13Bc3109750DF) | ✅ |
+| DividendFacet | [`0xB34c24D79A135c4360aCe4Ad3B5A0f03d92D5AB3`](https://amoy.polygonscan.com/address/0xB34c24D79A135c4360aCe4Ad3B5A0f03d92D5AB3) | ✅ |
+| AssetGroupFacet | [`0xEF6271FEee158E40Cf21D70f12FF71b82BaFefe6`](https://amoy.polygonscan.com/address/0xEF6271FEee158E40Cf21D70f12FF71b82BaFefe6) | ✅ |
+| DiamondInit | [`0x148792860cdF971c768BaC0769a919611B85c394`](https://amoy.polygonscan.com/address/0x148792860cdF971c768BaC0769a919611B85c394) | ✅ |
+
+> **Owner:** `0xB40061C7bf8394eb130Fcb5EA06868064593BFAa`
+>
+> Full deployment data: [`packages/contracts/deployments/amoy.json`](packages/contracts/deployments/amoy.json)
+
 ## Getting Started
 
 ### Prerequisites
