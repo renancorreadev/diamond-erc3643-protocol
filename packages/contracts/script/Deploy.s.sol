@@ -27,6 +27,20 @@ import {MetadataFacet} from "../src/facets/token/MetadataFacet.sol";
 import {IDiamond, IDiamondCut, IDiamondLoupe} from "../src/interfaces/core/IDiamond.sol";
 // solhint-disable-next-line import-path-check
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {IERC1155MetadataURI} from "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
+
+/// @dev Sets EIP-1967 implementation slot so Polygonscan shows "Read/Write as Proxy".
+contract EIP1967Init {
+    bytes32 internal constant _IMPLEMENTATION_SLOT =
+        0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+
+    function init(address implementation) external {
+        assembly {
+            sstore(_IMPLEMENTATION_SLOT, implementation)
+        }
+    }
+}
 
 /// @title Deploy
 /// @author Renan Correa <renan.correa@hubweb3.com>
@@ -100,13 +114,25 @@ contract Deploy is Script {
 
         // ── 4. Execute diamond cut + init ───────────────────────────
 
+        string memory tokenName = vm.envOr("TOKEN_NAME", string("Diamond RWA"));
+        string memory tokenSymbol = vm.envOr("TOKEN_SYMBOL", string("dRWA"));
+
         IDiamondCut(address(diamond)).diamondCut(
-            cuts, address(diamondInit), abi.encodeCall(DiamondInit.init, ())
+            cuts, address(diamondInit), abi.encodeCall(DiamondInit.init, (tokenName, tokenSymbol))
+        );
+
+        // ── 5. Set EIP-1967 implementation slot for Polygonscan proxy detection ──
+
+        EIP1967Init eip1967Init = new EIP1967Init();
+        IDiamondCut(address(diamond)).diamondCut(
+            new IDiamond.FacetCut[](0),
+            address(eip1967Init),
+            abi.encodeCall(EIP1967Init.init, (address(loupeFacet)))
         );
 
         vm.stopBroadcast();
 
-        // ── 5. Log addresses ────────────────────────────────────────
+        // ── 6. Log addresses ────────────────────────────────────────
 
         console2.log("");
         console2.log("=== Diamond ERC-3643 Protocol ===");
@@ -145,10 +171,12 @@ contract Deploy is Script {
         console2.log("--- Compliance ---");
         console2.log("ComplianceRouterFacet:", address(complianceRouterFacet));
         console2.log("");
+        console2.log("--- Initializers ---");
         console2.log("DiamondInit          :", address(diamondInit));
+        console2.log("EIP1967Init          :", address(eip1967Init));
         console2.log("");
 
-        // ── 6. Verify ───────────────────────────────────────────────
+        // ── 7. Verify ───────────────────────────────────────────────
 
         _verify(diamond, owner);
     }
@@ -281,12 +309,12 @@ contract Deploy is Script {
     }
 
     function _complianceRouterSelectors() internal pure returns (bytes4[] memory sels) {
-        sels = new bytes4[](5);
+        sels = new bytes4[](4);
         sels[0] = ComplianceRouterFacet.canTransfer.selector;
         sels[1] = ComplianceRouterFacet.transferred.selector;
         sels[2] = ComplianceRouterFacet.minted.selector;
         sels[3] = ComplianceRouterFacet.burned.selector;
-        sels[4] = ComplianceRouterFacet.getComplianceModules.selector;
+        // getComplianceModules already registered via AssetManagerFacet
     }
 
     function _erc1155Selectors() internal pure returns (bytes4[] memory sels) {
@@ -312,14 +340,16 @@ contract Deploy is Script {
     }
 
     function _metadataSelectors() internal pure returns (bytes4[] memory sels) {
-        sels = new bytes4[](7);
+        sels = new bytes4[](9);
         sels[0] = MetadataFacet.uri.selector;
-        sels[1] = MetadataFacet.name.selector;
-        sels[2] = MetadataFacet.symbol.selector;
+        sels[1] = bytes4(0x00ad800c); // name(uint256)
+        sels[2] = bytes4(0x4e41a1fb); // symbol(uint256)
         sels[3] = MetadataFacet.supplyCap.selector;
         sels[4] = MetadataFacet.issuer.selector;
         sels[5] = MetadataFacet.allowedCountries.selector;
         sels[6] = MetadataFacet.tokenInfo.selector;
+        sels[7] = bytes4(0x06fdde03); // name()
+        sels[8] = bytes4(0x95d89b41); // symbol()
     }
 
     function _snapshotSelectors() internal pure returns (bytes4[] memory sels) {
@@ -380,6 +410,14 @@ contract Deploy is Script {
         require(
             IERC165(address(diamond)).supportsInterface(type(IDiamondLoupe).interfaceId),
             "Deploy: missing IDiamondLoupe"
+        );
+        require(
+            IERC165(address(diamond)).supportsInterface(type(IERC1155).interfaceId),
+            "Deploy: missing IERC1155"
+        );
+        require(
+            IERC165(address(diamond)).supportsInterface(type(IERC1155MetadataURI).interfaceId),
+            "Deploy: missing IERC1155MetadataURI"
         );
 
         console2.log("=== Verification OK ===");

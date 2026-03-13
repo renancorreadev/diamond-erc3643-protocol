@@ -76,7 +76,7 @@ contract DiamondHelper is Test {
 
         vm.prank(owner);
         IDiamondCut(address(d.diamond)).diamondCut(
-            cuts, address(diamondInit), abi.encodeCall(DiamondInit.init, ())
+            cuts, address(diamondInit), abi.encodeCall(DiamondInit.init, ("Diamond RWA", "dRWA"))
         );
     }
 
@@ -284,14 +284,16 @@ contract DiamondHelper is Test {
     }
 
     function _metadataSelectors() internal pure returns (bytes4[] memory sels) {
-        sels = new bytes4[](7);
+        sels = new bytes4[](9);
         sels[0] = MetadataFacet.uri.selector;
-        sels[1] = MetadataFacet.name.selector;
-        sels[2] = MetadataFacet.symbol.selector;
+        sels[1] = bytes4(0x00ad800c); // name(uint256)
+        sels[2] = bytes4(0x4e41a1fb); // symbol(uint256)
         sels[3] = MetadataFacet.supplyCap.selector;
         sels[4] = MetadataFacet.issuer.selector;
         sels[5] = MetadataFacet.allowedCountries.selector;
         sels[6] = MetadataFacet.tokenInfo.selector;
+        sels[7] = bytes4(0x06fdde03); // name()
+        sels[8] = bytes4(0x95d89b41); // symbol()
     }
 
     function _recoverySelectors() internal pure returns (bytes4[] memory sels) {
