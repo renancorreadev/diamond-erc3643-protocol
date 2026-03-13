@@ -4,6 +4,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { spawn, execSync } from "node:child_process";
 import { existsSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve, dirname, basename } from "node:path";
+import { fileURLToPath } from "node:url";
 
 // ── Config ──
 
@@ -24,6 +25,18 @@ const wss = new WebSocketServer({ server, path: "/ws" });
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, project: PROJECT_ROOT });
 });
+
+// Serve frontend static files in production
+const __serverDir = dirname(fileURLToPath(import.meta.url));
+const distDir = join(__serverDir, "../dist");
+if (existsSync(distDir)) {
+  app.use(express.static(distDir));
+  app.get("*", (_req, res, next) => {
+    if (_req.path.startsWith("/api") || _req.path.startsWith("/ws")) return next();
+    res.sendFile(join(distDir, "index.html"));
+  });
+  console.log(`[forge-visual] Serving frontend from ${distDir}`);
+}
 
 // ── WebSocket Handler ──
 

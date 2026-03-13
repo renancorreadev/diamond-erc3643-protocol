@@ -44,5 +44,28 @@ services:
       indexer:
         condition: service_healthy
 
+  # ── Forge Visual (Test Dashboard + Foundry) ──
+  forge-visual:
+    build:
+      context: .
+      dockerfile: packages/tools/forge-visual/Dockerfile
+    container_name: diamond-forge-visual
+    restart: unless-stopped
+    ports:
+      - "${FORGE_VISUAL_PORT:-3999}:3999"
+    environment:
+      - FORGE_PROJECT=/project
+      - PORT=3999
+      - NODE_ENV=production
+    volumes:
+      - forge-reports:/app/reports
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3999/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
 volumes:
   indexer-data:
+  forge-reports:
