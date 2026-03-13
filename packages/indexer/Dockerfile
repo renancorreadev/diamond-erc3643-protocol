@@ -13,11 +13,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Build RocksDB 9.7.4 from source (compatible with grocksdb v1.10.7)
-ENV ROCKSDB_VERSION=9.7.4
+# Build RocksDB 7.10.2 from source (stable, compiles clean with GCC 12)
+ENV ROCKSDB_VERSION=7.10.2
 RUN wget -qO- https://github.com/facebook/rocksdb/archive/refs/tags/v${ROCKSDB_VERSION}.tar.gz | tar xz \
     && cd rocksdb-${ROCKSDB_VERSION} \
-    && make shared_lib -j$(nproc) \
+    && PORTABLE=1 EXTRA_CXXFLAGS="-Wno-error" make shared_lib -j$(nproc) \
     && make install-shared INSTALL_PATH=/usr/local \
     && cd / && rm -rf rocksdb-${ROCKSDB_VERSION} \
     && ldconfig
