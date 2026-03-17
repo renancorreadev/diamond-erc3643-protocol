@@ -9,6 +9,7 @@ import {LibAppStorage, AppStorage} from "../../libraries/LibAppStorage.sol";
 import {LibFreezeStorage, FreezeStorage} from "../../storage/LibFreezeStorage.sol";
 import {LibDiamond} from "../../libraries/LibDiamond.sol";
 import {IComplianceModule} from "../../interfaces/compliance/IComplianceModule.sol";
+import {IHookablePlugin} from "../../interfaces/plugins/IHookablePlugin.sol";
 
 /**
  * @title SupplyFacet
@@ -141,6 +142,9 @@ contract SupplyFacet {
             IComplianceModule(modules[i]).transferred(tokenId, from, to, amount);
             unchecked { ++i; }
         }
+
+        // Plugin post-hooks
+        _pluginAction(config, IHookablePlugin.ActionType.Transfer, tokenId, from, to, amount);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -239,6 +243,9 @@ contract SupplyFacet {
             IComplianceModule(modules[i]).minted(tokenId, to, amount);
             unchecked { ++i; }
         }
+
+        // Plugin post-hooks
+        _pluginAction(config, IHookablePlugin.ActionType.Mint, tokenId, address(0), to, amount);
     }
 
     function _executeBurn(uint256 tokenId, address from, uint256 amount) internal {
@@ -268,6 +275,9 @@ contract SupplyFacet {
             IComplianceModule(modules[i]).burned(tokenId, from, amount);
             unchecked { ++i; }
         }
+
+        // Plugin post-hooks
+        _pluginAction(config, IHookablePlugin.ActionType.Burn, tokenId, from, address(0), amount);
     }
 
     /// @dev Updates holder tracking for forced transfers
@@ -303,5 +313,36 @@ contract SupplyFacet {
         bool isOwner = msg.sender == LibDiamond.contractOwner();
         bool isAgent = LibAccessStorage.layout().roles[TRANSFER_AGENT][msg.sender];
         if (!isOwner && !isAgent) revert SupplyFacet__Unauthorized();
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                    INTERNAL — PLUGIN HOOKS
+    //////////////////////////////////////////////////////////////*/
+
+    function _pluginAction(
+        AssetConfig storage config,
+        IHookablePlugin.ActionType actionType,
+        uint256 tokenId,
+        address from,
+        address to,
+        uint256 amount
+    ) internal {
+        address[] storage pModules = config.pluginModules;
+        uint256 pLen = pModules.length;
+        if (pLen == 0) return;
+
+        IHookablePlugin.ActionParams memory params = IHookablePlugin.ActionParams({
+            actionType: actionType,
+            tokenId: tokenId,
+            operator: msg.sender,
+            from: from,
+            to: to,
+            amount: amount
+        });
+
+        for (uint256 i; i < pLen;) {
+            IHookablePlugin(pModules[i]).onAction(params);
+            unchecked { ++i; }
+        }
     }
 }

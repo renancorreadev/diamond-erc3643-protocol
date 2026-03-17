@@ -19,6 +19,9 @@ interface IAssetManager {
     function addComplianceModule(uint256 tokenId, address module) external;
     function removeComplianceModule(uint256 tokenId, address module) external;
     function setComplianceModules(uint256 tokenId, address[] calldata modules) external;
+    function addPluginModule(uint256 tokenId, address module) external;
+    function removePluginModule(uint256 tokenId, address module) external;
+    function setPluginModules(uint256 tokenId, address[] calldata modules) external;
     function setIdentityProfile(uint256 tokenId, uint32 profileId) external;
     function setIssuer(uint256 tokenId, address issuer) external;
     function setSupplyCap(uint256 tokenId, uint256 cap) external;
@@ -27,6 +30,7 @@ interface IAssetManager {
 
     function getAssetConfig(uint256 tokenId) external view returns (AssetConfig memory);
     function getComplianceModules(uint256 tokenId) external view returns (address[] memory);
+    function getPluginModules(uint256 tokenId) external view returns (address[] memory);
     function getRegisteredTokenIds() external view returns (uint256[] memory);
     function assetExists(uint256 tokenId) external view returns (bool);
     function nextTokenId() external view returns (uint256);
