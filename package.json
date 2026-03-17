@@ -13,14 +13,12 @@
     "test": "turbo run test",
     "lint": "turbo run lint",
     "clean": "turbo run clean",
-
     "contracts:build": "pnpm --filter @diamond-erc3643/contracts build",
     "contracts:clean": "pnpm --filter @diamond-erc3643/contracts clean",
     "contracts:fmt": "pnpm --filter @diamond-erc3643/contracts fmt",
     "contracts:fmt:check": "pnpm --filter @diamond-erc3643/contracts fmt:check",
     "contracts:lint": "pnpm --filter @diamond-erc3643/contracts lint",
     "contracts:lint:fix": "pnpm --filter @diamond-erc3643/contracts lint:fix",
-
     "contracts:test": "pnpm --filter @diamond-erc3643/contracts test",
     "contracts:test:vvv": "pnpm --filter @diamond-erc3643/contracts test:vvv",
     "contracts:test:unit": "pnpm --filter @diamond-erc3643/contracts test:unit",
@@ -29,12 +27,16 @@
     "contracts:test:fork": "pnpm --filter @diamond-erc3643/contracts test:fork",
     "contracts:coverage": "pnpm --filter @diamond-erc3643/contracts coverage",
     "contracts:slither": "pnpm --filter @diamond-erc3643/contracts slither",
-
     "contracts:deploy:local": "pnpm --filter @diamond-erc3643/contracts deploy:local",
-    "contracts:deploy:dry": "pnpm --filter @diamond-erc3643/contracts deploy:dry"
+    "contracts:deploy:dry": "pnpm --filter @diamond-erc3643/contracts deploy:dry",
+    "dev": "bash scripts/dev.sh",
+    "dev:app": "pnpm --filter @diamond-erc3643/app dev",
+    "dev:indexer": "cd packages/indexer && make run",
+    "test:ui": "cd packages/tools/forge-visual && FORGE_PROJECT=../../contracts pnpm dev"
   },
   "devDependencies": {
-    "turbo": "^2.5.4",
-    "@changesets/cli": "^2.29.4"
+    "@changesets/cli": "^2.29.4",
+    "tsx": "^4.21.0",
+    "turbo": "^2.5.4"
   }
 }

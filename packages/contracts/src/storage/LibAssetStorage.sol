@@ -19,6 +19,7 @@ struct AssetConfig {
     bool paused;
     bool exists;
     uint16[] allowedCountries;  // ISO 3166-1 numeric; empty = all allowed
+    address[] pluginModules;    // → IHookablePlugin[] (max 5)
 }
 
 struct AssetStorage {

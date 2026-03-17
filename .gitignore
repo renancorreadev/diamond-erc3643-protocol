@@ -19,6 +19,8 @@ artifacts/
 typechain-types/
 lcov.info
 coverage/
+reports/
+crytic-export/
 
 # ──────────────────────────────────────────────
 # Node / pnpm

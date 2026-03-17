@@ -19,6 +19,8 @@ import {ClaimTopicsFacet} from "../../src/facets/identity/ClaimTopicsFacet.sol";
 import {TrustedIssuerFacet} from "../../src/facets/identity/TrustedIssuerFacet.sol";
 import {IdentityRegistryFacet} from "../../src/facets/identity/IdentityRegistryFacet.sol";
 import {ComplianceRouterFacet} from "../../src/facets/compliance/ComplianceRouterFacet.sol";
+import {PluginRouterFacet} from "../../src/facets/routers/PluginRouterFacet.sol";
+import {GlobalPluginFacet} from "../../src/facets/plugins/GlobalPluginFacet.sol";
 import {ERC1155Facet} from "../../src/facets/token/ERC1155Facet.sol";
 import {SupplyFacet} from "../../src/facets/token/SupplyFacet.sol";
 import {MetadataFacet} from "../../src/facets/token/MetadataFacet.sol";
@@ -52,6 +54,8 @@ contract DiamondHelper is Test {
         TrustedIssuerFacet trustedIssuerFacet;
         IdentityRegistryFacet identityRegistryFacet;
         ComplianceRouterFacet complianceRouterFacet;
+        PluginRouterFacet pluginRouterFacet;
+        GlobalPluginFacet globalPluginFacet;
     }
 
     struct DeployedDiamond {
@@ -69,14 +73,14 @@ contract DiamondHelper is Test {
 
         d.diamond = new Diamond(owner, address(d.core.cutFacet));
 
-        IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](18);
+        IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](20);
         _fillCoreCuts(cuts, d.core);
         _fillTokenCuts(cuts, d.token);
         _fillComplianceCuts(cuts, d.compliance);
 
         vm.prank(owner);
         IDiamondCut(address(d.diamond)).diamondCut(
-            cuts, address(diamondInit), abi.encodeCall(DiamondInit.init, ())
+            cuts, address(diamondInit), abi.encodeCall(DiamondInit.init, ("Diamond RWA", "dRWA"))
         );
     }
 
@@ -106,6 +110,8 @@ contract DiamondHelper is Test {
         c.trustedIssuerFacet = new TrustedIssuerFacet();
         c.identityRegistryFacet = new IdentityRegistryFacet();
         c.complianceRouterFacet = new ComplianceRouterFacet();
+        c.pluginRouterFacet = new PluginRouterFacet();
+        c.globalPluginFacet = new GlobalPluginFacet();
     }
 
     function _fillCoreCuts(IDiamond.FacetCut[] memory cuts, CoreFacets memory c) internal pure {
@@ -133,6 +139,8 @@ contract DiamondHelper is Test {
         cuts[8] = _cut(address(c.trustedIssuerFacet), _trustedIssuerSelectors());
         cuts[9] = _cut(address(c.identityRegistryFacet), _identityRegistrySelectors());
         cuts[10] = _cut(address(c.complianceRouterFacet), _complianceRouterSelectors());
+        cuts[18] = _cut(address(c.pluginRouterFacet), _pluginRouterSelectors());
+        cuts[19] = _cut(address(c.globalPluginFacet), _globalPluginSelectors());
     }
 
     function _cut(address facet, bytes4[] memory sels)
@@ -207,7 +215,7 @@ contract DiamondHelper is Test {
     }
 
     function _assetManagerSelectors() internal pure returns (bytes4[] memory sels) {
-        sels = new bytes4[](14);
+        sels = new bytes4[](18);
         sels[0] = AssetManagerFacet.registerAsset.selector;
         sels[1] = AssetManagerFacet.addComplianceModule.selector;
         sels[2] = AssetManagerFacet.removeComplianceModule.selector;
@@ -222,6 +230,10 @@ contract DiamondHelper is Test {
         sels[11] = AssetManagerFacet.getRegisteredTokenIds.selector;
         sels[12] = AssetManagerFacet.assetExists.selector;
         sels[13] = AssetManagerFacet.nextTokenId.selector;
+        sels[14] = AssetManagerFacet.addPluginModule.selector;
+        sels[15] = AssetManagerFacet.removePluginModule.selector;
+        sels[16] = AssetManagerFacet.setPluginModules.selector;
+        sels[17] = AssetManagerFacet.getPluginModules.selector;
     }
 
     function _claimTopicsSelectors() internal pure returns (bytes4[] memory sels) {
@@ -261,6 +273,23 @@ contract DiamondHelper is Test {
         sels[3] = ComplianceRouterFacet.burned.selector;
     }
 
+    function _pluginRouterSelectors() internal pure returns (bytes4[] memory sels) {
+        sels = new bytes4[](1);
+        sels[0] = PluginRouterFacet.pluginAction.selector;
+    }
+
+    function _globalPluginSelectors() internal pure returns (bytes4[] memory sels) {
+        sels = new bytes4[](8);
+        sels[0] = GlobalPluginFacet.registerGlobalPlugin.selector;
+        sels[1] = GlobalPluginFacet.removeGlobalPlugin.selector;
+        sels[2] = GlobalPluginFacet.setGlobalPluginStatus.selector;
+        sels[3] = GlobalPluginFacet.getGlobalPlugins.selector;
+        sels[4] = GlobalPluginFacet.getActiveGlobalPlugins.selector;
+        sels[5] = GlobalPluginFacet.getGlobalPluginInfo.selector;
+        sels[6] = GlobalPluginFacet.isGlobalPlugin.selector;
+        sels[7] = GlobalPluginFacet.globalPluginCount.selector;
+    }
+
     function _erc1155Selectors() internal pure returns (bytes4[] memory sels) {
         sels = new bytes4[](7);
         sels[0] = ERC1155Facet.safeTransferFrom.selector;
@@ -284,14 +313,16 @@ contract DiamondHelper is Test {
     }
 
     function _metadataSelectors() internal pure returns (bytes4[] memory sels) {
-        sels = new bytes4[](7);
+        sels = new bytes4[](9);
         sels[0] = MetadataFacet.uri.selector;
-        sels[1] = MetadataFacet.name.selector;
-        sels[2] = MetadataFacet.symbol.selector;
+        sels[1] = bytes4(0x00ad800c); // name(uint256)
+        sels[2] = bytes4(0x4e41a1fb); // symbol(uint256)
         sels[3] = MetadataFacet.supplyCap.selector;
         sels[4] = MetadataFacet.issuer.selector;
         sels[5] = MetadataFacet.allowedCountries.selector;
         sels[6] = MetadataFacet.tokenInfo.selector;
+        sels[7] = bytes4(0x06fdde03); // name()
+        sels[8] = bytes4(0x95d89b41); // symbol()
     }
 
     function _recoverySelectors() internal pure returns (bytes4[] memory sels) {

@@ -7,6 +7,8 @@ import {LibAppStorage, AppStorage} from "../../libraries/LibAppStorage.sol";
 import {LibFreezeStorage, FreezeStorage} from "../../storage/LibFreezeStorage.sol";
 import {LibSupplyStorage, SupplyStorage} from "../../storage/LibSupplyStorage.sol";
 import {IComplianceModule} from "../../interfaces/compliance/IComplianceModule.sol";
+import {IHookablePlugin} from "../../interfaces/plugins/IHookablePlugin.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 
 /**
  * @title ERC1155Facet
@@ -150,8 +152,12 @@ contract ERC1155Facet {
         emit TransferSingle(operator, from, to, id, amount);
         emit RegulatoryTransfer(id, from, to, amount, reason);
 
-        // Post-hook
+        // Post-hooks
         _compliancePostTransfer(id, from, to, amount);
+        _pluginPostTransfer(id, operator, from, to, amount);
+
+        // ERC-1155 receiver callback
+        _checkOnERC1155Received(operator, from, to, id, amount, data);
     }
 
     function _validateAndTransferBatch(
@@ -174,9 +180,13 @@ contract ERC1155Facet {
             _executeTransfer(from, to, ids[i], amounts[i]);
             emit RegulatoryTransfer(ids[i], from, to, amounts[i], reason);
             _compliancePostTransfer(ids[i], from, to, amounts[i]);
+            _pluginPostTransfer(ids[i], operator, from, to, amounts[i]);
         }
 
         emit TransferBatch(operator, from, to, ids, amounts);
+
+        // ERC-1155 receiver callback
+        _checkOnERC1155BatchReceived(operator, from, to, ids, amounts, data);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -207,6 +217,26 @@ contract ERC1155Facet {
         uint256 len = modules.length;
         for (uint256 i; i < len;) {
             IComplianceModule(modules[i]).transferred(tokenId, from, to, amount);
+            unchecked { ++i; }
+        }
+    }
+
+    function _pluginPostTransfer(uint256 tokenId, address operator, address from, address to, uint256 amount) internal {
+        address[] storage pModules = LibAssetStorage.layout().configs[tokenId].pluginModules;
+        uint256 pLen = pModules.length;
+        if (pLen == 0) return;
+
+        IHookablePlugin.ActionParams memory params = IHookablePlugin.ActionParams({
+            actionType: IHookablePlugin.ActionType.Transfer,
+            tokenId: tokenId,
+            operator: operator,
+            from: from,
+            to: to,
+            amount: amount
+        });
+
+        for (uint256 i; i < pLen;) {
+            IHookablePlugin(pModules[i]).onAction(params);
             unchecked { ++i; }
         }
     }
@@ -278,6 +308,53 @@ contract ERC1155Facet {
         if (operator != from) {
             if (!LibERC1155Storage.layout().operatorApprovals[from][operator]) {
                 revert ERC1155Facet__NotApprovedOrOwner();
+            }
+        }
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                    INTERNAL — RECEIVER CALLBACKS
+    //////////////////////////////////////////////////////////////*/
+
+    /// @dev Calls onERC1155Received on `to` if it is a contract.
+    ///      Reverts if the receiver rejects the transfer or does not implement the interface.
+    function _checkOnERC1155Received(
+        address operator,
+        address from,
+        address to,
+        uint256 id,
+        uint256 amount,
+        bytes calldata data
+    ) internal {
+        if (to.code.length > 0) {
+            try IERC1155Receiver(to).onERC1155Received(operator, from, id, amount, data) returns (bytes4 response) {
+                if (response != IERC1155Receiver.onERC1155Received.selector) {
+                    revert ERC1155Facet__InvalidReceiver(to);
+                }
+            } catch {
+                revert ERC1155Facet__InvalidReceiver(to);
+            }
+        }
+    }
+
+    /// @dev Calls onERC1155BatchReceived on `to` if it is a contract.
+    function _checkOnERC1155BatchReceived(
+        address operator,
+        address from,
+        address to,
+        uint256[] calldata ids,
+        uint256[] calldata amounts,
+        bytes calldata data
+    ) internal {
+        if (to.code.length > 0) {
+            try IERC1155Receiver(to).onERC1155BatchReceived(operator, from, ids, amounts, data) returns (
+                bytes4 response
+            ) {
+                if (response != IERC1155Receiver.onERC1155BatchReceived.selector) {
+                    revert ERC1155Facet__InvalidReceiver(to);
+                }
+            } catch {
+                revert ERC1155Facet__InvalidReceiver(to);
             }
         }
     }

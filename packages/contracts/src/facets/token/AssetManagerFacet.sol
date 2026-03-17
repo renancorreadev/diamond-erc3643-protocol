@@ -17,6 +17,9 @@ error AssetManagerFacet__Unauthorized();
 error AssetManagerFacet__TooManyModules(uint256 count, uint256 max);
 error AssetManagerFacet__ModuleNotFound(address module);
 error AssetManagerFacet__ModuleAlreadyAdded(address module);
+error AssetManagerFacet__TooManyPluginModules(uint256 count, uint256 max);
+error AssetManagerFacet__PluginModuleNotFound(address module);
+error AssetManagerFacet__PluginModuleAlreadyAdded(address module);
 
 /*//////////////////////////////////////////////////////////////
                             CONTRACT
@@ -38,6 +41,9 @@ contract AssetManagerFacet {
     /// @dev Maximum compliance modules per tokenId to prevent unbounded loops in transfers.
     uint256 internal constant MAX_COMPLIANCE_MODULES = 10;
 
+    /// @dev Maximum plugin modules per tokenId.
+    uint256 internal constant MAX_PLUGIN_MODULES = 5;
+
     /*//////////////////////////////////////////////////////////////
                                 EVENTS
     //////////////////////////////////////////////////////////////*/
@@ -47,6 +53,12 @@ contract AssetManagerFacet {
     event ComplianceModulesSet(uint256 indexed tokenId, address[] modules);
     event ComplianceModuleAdded(uint256 indexed tokenId, address indexed module);
     event ComplianceModuleRemoved(uint256 indexed tokenId, address indexed module);
+    event PluginModulesSet(uint256 indexed tokenId, address[] modules);
+    event PluginModuleAdded(uint256 indexed tokenId, address indexed module);
+    event PluginModuleRemoved(uint256 indexed tokenId, address indexed module);
+
+    /// @dev ERC-1155 standard metadata event — emitted on URI change so indexers detect metadata updates.
+    event URI(string value, uint256 indexed id);
 
     /*//////////////////////////////////////////////////////////////
                         STATE-CHANGING FUNCTIONS
@@ -189,7 +201,72 @@ contract AssetManagerFacet {
         _enforceComplianceAdminOrOwner();
         _requireRegistered(tokenId);
         LibAssetStorage.layout().configs[tokenId].uri = uri;
+        emit URI(uri, tokenId);
         emit AssetConfigUpdated(tokenId);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                    PLUGIN MODULE MANAGEMENT
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Adds a plugin module to a tokenId's module list.
+    /// @param tokenId The asset class to modify
+    /// @param module The plugin module address to add
+    function addPluginModule(uint256 tokenId, address module) external {
+        _enforceComplianceAdminOrOwner();
+        _requireRegistered(tokenId);
+        if (module == address(0)) revert AssetManagerFacet__ZeroAddress();
+
+        address[] storage modules = LibAssetStorage.layout().configs[tokenId].pluginModules;
+
+        uint256 len = modules.length;
+        for (uint256 i; i < len;) {
+            if (modules[i] == module) revert AssetManagerFacet__PluginModuleAlreadyAdded(module);
+            unchecked { ++i; }
+        }
+        if (len >= MAX_PLUGIN_MODULES) {
+            revert AssetManagerFacet__TooManyPluginModules(len + 1, MAX_PLUGIN_MODULES);
+        }
+
+        modules.push(module);
+        emit PluginModuleAdded(tokenId, module);
+    }
+
+    /// @notice Removes a plugin module from a tokenId's module list.
+    ///         Uses swap-and-pop for gas efficiency (order not guaranteed).
+    /// @param tokenId The asset class to modify
+    /// @param module The plugin module address to remove
+    function removePluginModule(uint256 tokenId, address module) external {
+        _enforceComplianceAdminOrOwner();
+        _requireRegistered(tokenId);
+
+        address[] storage modules = LibAssetStorage.layout().configs[tokenId].pluginModules;
+        uint256 len = modules.length;
+
+        for (uint256 i; i < len;) {
+            if (modules[i] == module) {
+                modules[i] = modules[len - 1];
+                modules.pop();
+                emit PluginModuleRemoved(tokenId, module);
+                return;
+            }
+            unchecked { ++i; }
+        }
+        revert AssetManagerFacet__PluginModuleNotFound(module);
+    }
+
+    /// @notice Replaces all plugin modules for a tokenId.
+    ///         Pass empty array to remove all modules.
+    /// @param tokenId The asset class to modify
+    /// @param modules The new plugin module addresses
+    function setPluginModules(uint256 tokenId, address[] calldata modules) external {
+        _enforceComplianceAdminOrOwner();
+        _requireRegistered(tokenId);
+        if (modules.length > MAX_PLUGIN_MODULES) {
+            revert AssetManagerFacet__TooManyPluginModules(modules.length, MAX_PLUGIN_MODULES);
+        }
+        LibAssetStorage.layout().configs[tokenId].pluginModules = modules;
+        emit PluginModulesSet(tokenId, modules);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -204,6 +281,11 @@ contract AssetManagerFacet {
     /// @notice Returns the compliance modules for a tokenId.
     function getComplianceModules(uint256 tokenId) external view returns (address[] memory) {
         return LibAssetStorage.layout().configs[tokenId].complianceModules;
+    }
+
+    /// @notice Returns the plugin modules for a tokenId.
+    function getPluginModules(uint256 tokenId) external view returns (address[] memory) {
+        return LibAssetStorage.layout().configs[tokenId].pluginModules;
     }
 
     /// @notice Returns all registered tokenIds in registration order.

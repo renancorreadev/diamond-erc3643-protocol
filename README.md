@@ -6,26 +6,7 @@ A single Diamond contract manages multiple regulated asset classes — each `tok
 
 ## Architecture
 
-```
-                     ┌──────────────────────────────┐
-                     │     Diamond Proxy (EIP-2535)  │
-                     │     single contract address   │
-                     └──────────────┬───────────────┘
-                                    │ delegatecall
-          ┌─────────────────────────┼─────────────────────────┐
-          │            │            │            │             │
-     ┌────┴────┐ ┌─────┴─────┐ ┌───┴────┐ ┌────┴────┐ ┌──────┴──────┐
-     │  Core   │ │  Security │ │ Token  │ │Identity │ │     RWA     │
-     │  (3)    │ │    (3)    │ │  (4)   │ │  (3)    │ │     (6)     │
-     └─────────┘ └───────────┘ └────────┘ └─────────┘ └─────────────┘
-          │            │            │            │             │
-          └─────────────────────────┴─────────────────────────┘
-                                    │
-                     ┌──────────────┴───────────────┐
-                     │   11 Isolated Storage Slots   │
-                     │  keccak256("diamond.rwa.X") - 1│
-                     └──────────────────────────────┘
-```
+![Diamond Architecture](docs/diamond.png)
 
 ### Standards
 
@@ -43,7 +24,7 @@ Global              ──  Diamond ownership, global pause, RBAC, identity regi
        └─ Per holder ── balance partitions (free/locked/custody), freeze, lockup
 ```
 
-## Facets (19 total)
+## Facets (21 total)
 
 ### Core (3)
 
@@ -65,7 +46,7 @@ Global              ──  Diamond ownership, global pause, RBAC, identity regi
 
 | Facet | Purpose |
 |-------|---------|
-| `AssetManagerFacet` | Register and configure asset classes per `tokenId` |
+| `AssetManagerFacet` | Register and configure asset classes per `tokenId`; plug/unplug compliance and plugin modules |
 | `ERC1155Facet` | Compliant transfers and balance queries |
 | `SupplyFacet` | Mint, burn, forced transfer |
 | `MetadataFacet` | Name, symbol, URI per `tokenId` |
@@ -78,12 +59,6 @@ Global              ──  Diamond ownership, global pause, RBAC, identity regi
 | `ClaimTopicsFacet` | Define required KYC claim topics per identity profile |
 | `TrustedIssuerFacet` | Manage authorized claim issuers |
 
-### Compliance (1)
-
-| Facet | Purpose |
-|-------|---------|
-| `ComplianceRouterFacet` | Route `canTransfer()` to the compliance module assigned to each `tokenId` |
-
 ### RWA Operations (5)
 
 | Facet | Purpose |
@@ -94,7 +69,15 @@ Global              ──  Diamond ownership, global pause, RBAC, identity regi
 | `SnapshotFacet` | Point-in-time balance snapshots |
 | `DividendFacet` | Pro-rata dividend distribution linked to snapshots |
 
-### Compliance Modules (pluggable)
+### Routers & Plugins (3)
+
+| Facet | Purpose |
+|-------|---------|
+| `ComplianceRouterFacet` | Route `canTransfer()` + post-hooks to compliance modules per `tokenId` |
+| `PluginRouterFacet` | Route `onAction()` to hookable plugin modules per `tokenId` after balance mutations |
+| `GlobalPluginFacet` | Registry for protocol-wide plugins (marketplace, AMM, governance) — cross-asset services |
+
+### Compliance Modules (pluggable, gating)
 
 | Module | Description |
 |--------|-------------|
@@ -102,9 +85,15 @@ Global              ──  Diamond ownership, global pause, RBAC, identity regi
 | `MaxBalanceModule` | Maximum token balance per holder |
 | `MaxHoldersModule` | Cap on number of unique holders per asset |
 
+### Plugin Modules (pluggable, reactive)
+
+| Module | Description |
+|--------|-------------|
+| `YieldDistributorModule` | Distributes real yield (any ERC-20) to holders proportionally via accumulator pattern (O(1) per operation) |
+
 ## Transfer Flow
 
-Every `safeTransferFrom` passes through 6 validation stages before execution:
+Every `safeTransferFrom` passes through 6 validation stages, then fires compliance and plugin hooks:
 
 ```
 safeTransferFrom(from, to, tokenId, amount)
@@ -117,8 +106,499 @@ safeTransferFrom(from, to, tokenId, amount)
   ├─ 6. Compliance module check    → revert ComplianceCheckFailed
   │
   ├─ Execute: update balances + holder tracking
-  └─ Post-hook: module.transferred() for state updates
+  ├─ Compliance post-hook: module.transferred() for state updates
+  ├─ Plugin post-hook: module.onAction() for reactive logic (yield, loyalty, etc.)
+  └─ ERC-1155 receiver callback: onERC1155Received()
 ```
+
+## Plugin System (Plug & Play)
+
+The Diamond protocol has three extension mechanisms:
+
+1. **Compliance Modules** — gate transfers before execution (per tokenId)
+2. **Asset Plugins** — react to state changes after execution (per tokenId)
+3. **Global Plugins** — protocol-wide services that operate across all tokenIds
+
+All are pluggable at runtime — no `diamondCut` required.
+
+### Why Plugins Instead of Facets?
+
+Adding a facet via `diamondCut` costs ~20k gas per selector (5 selectors = ~100k gas) and requires owner privileges. Plugins cost a single `SSTORE` (~20k gas total) to register. They're also safer — plugins are external contracts with their own storage, they can't corrupt the Diamond's internal state.
+
+| Dimension | Compliance Modules | Asset Plugins | Global Plugins |
+|-----------|-------------------|---------------|----------------|
+| **Scope** | Per tokenId | Per tokenId | Protocol-wide |
+| **Interface** | `IComplianceModule` | `IHookablePlugin` | `IPluginModule` |
+| **Purpose** | **Gate** — block invalid transfers | **React** — observe balance changes | **Service** — cross-asset functionality |
+| **When** | Before balance mutation | After balance mutation | On demand |
+| **Receives hooks?** | Yes (`canTransfer`, `transferred`) | Yes (`onAction`) | No |
+| **Example** | Country restriction, max balance | Yield, vesting, loyalty | Marketplace, AMM, governance |
+| **Max count** | 10 per tokenId | 5 per tokenId | 20 protocol-wide |
+| **Managed by** | `AssetManagerFacet` | `AssetManagerFacet` | `GlobalPluginFacet` |
+
+### Plugin Architecture
+
+```
+Diamond
+│
+├── Global Plugins (GlobalPluginFacet)
+│   ├── Protocol-wide, cross-asset services
+│   ├── Marketplace, AMM, governance, voting
+│   ├── register / remove / activate / deactivate
+│   ├── O(1) add/remove via indexed mapping
+│   └── Versionable: remove v1, add v2
+│
+└── Asset Plugins (per tokenId, in AssetConfig)
+    ├── Hookable (IHookablePlugin)
+    │   └── Receive onAction on transfer/mint/burn
+    │       Ex: YieldDistributor, vesting, loyalty
+    └── Service (IPluginModule)
+        └── Registered but not hooked
+```
+
+### Plugin Interfaces
+
+All plugins implement `IPluginModule` (base):
+
+```solidity
+interface IPluginModule {
+    function name() external view returns (string memory);
+}
+```
+
+Plugins that need balance-change hooks implement `IHookablePlugin`:
+
+```solidity
+interface IHookablePlugin is IPluginModule {
+    enum ActionType { Transfer, Mint, Burn }
+
+    struct ActionParams {
+        ActionType actionType;   // what happened
+        uint256    tokenId;      // which asset class
+        address    operator;     // who initiated (msg.sender in Diamond)
+        address    from;         // source (address(0) for mints)
+        address    to;           // destination (address(0) for burns)
+        uint256    amount;       // how many tokens
+    }
+
+    function onAction(ActionParams calldata params) external;
+}
+```
+
+**Design decisions:**
+
+- **Single `onAction` instead of `onTransfer`/`onMint`/`onBurn`** — the module decides which action types to handle. A yield module needs all three; a tax module only needs transfers. No wasted gas on empty hook calls.
+- **`ActionType` enum instead of checking `from == address(0)`** — explicit, extensible (can add `Freeze`, `Recovery` in the future without breaking the interface), cheaper to compare (uint8 vs address).
+- **Calldata struct instead of 5 separate parameters** — avoids stack-too-deep, cheaper ABI encoding, cleaner function signatures.
+- **`operator` field** — distinguishes who initiated the action from the `from`/`to` addresses. A `forcedTransfer` has `operator = admin`, `from = holder`.
+
+### Global Plugins — Cross-Asset Services
+
+Global plugins are protocol-wide services like marketplaces, AMMs, or governance modules. They operate across all tokenIds and are managed via `GlobalPluginFacet`.
+
+```solidity
+// Register a marketplace plugin
+GlobalPluginFacet(diamond).registerGlobalPlugin(address(marketplaceV1));
+
+// Version upgrade: remove v1, add v2
+GlobalPluginFacet(diamond).removeGlobalPlugin(address(marketplaceV1));
+GlobalPluginFacet(diamond).registerGlobalPlugin(address(marketplaceV2));
+
+// Temporarily disable during incident
+GlobalPluginFacet(diamond).setGlobalPluginStatus(address(marketplace), false);
+
+// Re-enable
+GlobalPluginFacet(diamond).setGlobalPluginStatus(address(marketplace), true);
+
+// Query
+GlobalPluginInfo[] memory all = GlobalPluginFacet(diamond).getGlobalPlugins();
+address[] memory active = GlobalPluginFacet(diamond).getActiveGlobalPlugins();
+bool registered = GlobalPluginFacet(diamond).isGlobalPlugin(address(marketplace));
+```
+
+Global plugins inherit the Diamond's role-based permission system — they interact with the Diamond's public API (`balanceOf`, `safeTransferFrom`, `isVerified`, etc.) like any other external contract, but are **recognized by the protocol** as authorized extensions.
+
+**Storage design:** Uses an indexed mapping (`pluginIndex`) for O(1) add/remove/lookup instead of O(n) array scans. The `GlobalPluginInfo` struct packs `address` + `uint64` + `bool` into a single storage slot.
+
+### Asset Plugins — Per-TokenId Modules
+
+Asset plugins are tied to a specific tokenId. Hookable plugins receive automatic callbacks on every balance change.
+
+```solidity
+// Plug a hookable module into tokenId 1
+AssetManagerFacet(diamond).addPluginModule(1, address(yieldModule));
+
+// Unplug it
+AssetManagerFacet(diamond).removePluginModule(1, address(yieldModule));
+
+// Replace all modules at once
+AssetManagerFacet(diamond).setPluginModules(1, [addr1, addr2]);
+
+// Query active modules
+address[] memory modules = AssetManagerFacet(diamond).getPluginModules(1);
+```
+
+Max 5 plugin modules per tokenId to bound gas costs on hooks.
+
+### How Hooks Flow Through the System
+
+```mermaid
+graph TB
+    subgraph Diamond["Diamond Proxy"]
+        ERC["ERC1155Facet<br/><i>safeTransferFrom</i>"]
+        SUP["SupplyFacet<br/><i>mint / burn / forcedTransfer</i>"]
+        AM["AssetManagerFacet<br/><i>plug / unplug asset modules</i>"]
+        GP["GlobalPluginFacet<br/><i>register / remove global plugins</i>"]
+        CR["ComplianceRouterFacet"]
+        PR["PluginRouterFacet"]
+    end
+
+    subgraph Compliance["Compliance Modules (gating)"]
+        CM1["CountryRestrictModule"]
+        CM2["MaxBalanceModule"]
+        CM3["MaxHoldersModule"]
+    end
+
+    subgraph AssetPlugins["Asset Plugins (per tokenId, reactive)"]
+        AP1["YieldDistributorModule"]
+        AP2["Future: VestingModule"]
+        AP3["Future: LoyaltyModule"]
+    end
+
+    subgraph GlobalPlugins["Global Plugins (protocol-wide)"]
+        GP1["Marketplace v2"]
+        GP2["AMM"]
+        GP3["Governance"]
+    end
+
+    ERC -->|"1. canTransfer()"| CR
+    CR -->|"gate"| CM1 & CM2 & CM3
+    ERC -->|"2. execute transfer"| ERC
+    ERC -->|"3. transferred()"| CR
+    CR -->|"post-hook"| CM1 & CM2 & CM3
+    ERC -->|"4. onAction(Transfer)"| PR
+    PR -->|"post-hook"| AP1 & AP2 & AP3
+    SUP -->|"onAction(Mint/Burn)"| PR
+    AM -->|"add/remove"| AssetPlugins
+    GP -->|"register/remove"| GlobalPlugins
+    GlobalPlugins -.->|"call Diamond API"| Diamond
+
+    style Compliance fill:#fee,stroke:#c33
+    style AssetPlugins fill:#efe,stroke:#3a3
+    style GlobalPlugins fill:#ffd,stroke:#aa0
+    style Diamond fill:#eef,stroke:#33a
+```
+
+### Hook Dispatch — Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Diamond
+    participant ERC1155Facet
+    participant ComplianceRouter
+    participant PluginRouter
+    participant YieldModule
+
+    Note over User,YieldModule: Transfer Flow
+    User->>Diamond: safeTransferFrom(alice, bob, 1, 100)
+    Diamond->>ERC1155Facet: delegatecall
+    ERC1155Facet->>ComplianceRouter: canTransfer(1, alice, bob, 100)
+    ComplianceRouter-->>ERC1155Facet: (true, 0x0)
+    Note over ERC1155Facet: execute: alice.free -= 100, bob.free += 100
+    ERC1155Facet->>ComplianceRouter: transferred(1, alice, bob, 100)
+    ERC1155Facet->>PluginRouter: _pluginPostTransfer()
+    PluginRouter->>YieldModule: onAction({Transfer, 1, alice, alice, bob, 100})
+    Note over YieldModule: crystallize rewards for alice & bob
+
+    Note over User,YieldModule: Mint Flow
+    User->>Diamond: mint(1, carol, 500)
+    Diamond->>ERC1155Facet: delegatecall (SupplyFacet)
+    Note over ERC1155Facet: validate + execute mint
+    ERC1155Facet->>PluginRouter: _pluginAction(Mint)
+    PluginRouter->>YieldModule: onAction({Mint, 1, owner, address(0), carol, 500})
+    Note over YieldModule: checkpoint carol, set rewardDebt
+```
+
+### Creating a Custom Plugin
+
+#### Hookable Plugin (reacts to balance changes)
+
+```solidity
+import {IHookablePlugin} from "../interfaces/plugins/IHookablePlugin.sol";
+
+contract TransferTaxPlugin is IHookablePlugin {
+    address public immutable DIAMOND;
+
+    constructor(address diamond_) { DIAMOND = diamond_; }
+
+    function onAction(ActionParams calldata params) external {
+        if (msg.sender != DIAMOND) revert("only diamond");
+        if (params.actionType != ActionType.Transfer) return;
+        _collectTax(params.tokenId, params.from, params.amount);
+    }
+
+    function name() external pure returns (string memory) { return "TransferTax"; }
+}
+```
+
+Then plug it into a tokenId:
+
+```solidity
+AssetManagerFacet(diamond).addPluginModule(tokenId, address(taxPlugin));
+```
+
+#### Global Plugin (cross-asset service)
+
+```solidity
+import {IPluginModule} from "../interfaces/plugins/IPluginModule.sol";
+
+contract MarketplacePlugin is IPluginModule {
+    address public immutable DIAMOND;
+
+    constructor(address diamond_) { DIAMOND = diamond_; }
+
+    function name() external pure returns (string memory) { return "Marketplace v1"; }
+
+    // Marketplace-specific functions — interacts with Diamond via public API
+    function listToken(uint256 tokenId, uint256 amount, uint256 price) external { ... }
+    function buyToken(uint256 listingId) external { ... }
+}
+```
+
+Then register it protocol-wide:
+
+```solidity
+GlobalPluginFacet(diamond).registerGlobalPlugin(address(marketplace));
+```
+
+### GlobalPluginFacet — API Reference
+
+#### State-Changing Functions (owner or COMPLIANCE_ADMIN)
+
+| Function | Description |
+|----------|-------------|
+| `registerGlobalPlugin(plugin)` | Register a global plugin. Validates `IPluginModule.name()` on registration. Max 20. |
+| `removeGlobalPlugin(plugin)` | Remove a global plugin. O(1) via swap-and-pop with indexed mapping. |
+| `setGlobalPluginStatus(plugin, active)` | Activate/deactivate without removing. Useful for incidents or upgrades. |
+
+#### View Functions
+
+| Function | Description |
+|----------|-------------|
+| `getGlobalPlugins()` | Returns all registered plugins (active and inactive) with metadata. |
+| `getActiveGlobalPlugins()` | Returns only active plugin addresses. |
+| `getGlobalPluginInfo(plugin)` | Returns plugin address, registration timestamp, and active status. |
+| `isGlobalPlugin(plugin)` | Returns true if the plugin is registered. |
+| `globalPluginCount()` | Returns the total number of registered plugins. |
+
+#### Events
+
+| Event | When |
+|-------|------|
+| `GlobalPluginRegistered(plugin, name)` | A global plugin is registered |
+| `GlobalPluginRemoved(plugin)` | A global plugin is removed |
+| `GlobalPluginStatusChanged(plugin, active)` | A plugin is activated or deactivated |
+
+#### Errors
+
+| Error | When |
+|-------|------|
+| `GlobalPluginFacet__Unauthorized()` | Caller is not owner or COMPLIANCE_ADMIN |
+| `GlobalPluginFacet__ZeroAddress()` | Plugin address is `address(0)` |
+| `GlobalPluginFacet__AlreadyRegistered(plugin)` | Plugin is already registered |
+| `GlobalPluginFacet__NotRegistered(plugin)` | Plugin is not registered |
+| `GlobalPluginFacet__TooManyPlugins(count, max)` | Exceeds 20 global plugins |
+| `GlobalPluginFacet__AlreadyActive(plugin)` | Setting active on already active plugin |
+| `GlobalPluginFacet__AlreadyInactive(plugin)` | Setting inactive on already inactive plugin |
+
+---
+
+## YieldDistributorModule
+
+The first plugin module. Distributes real yield (USDC, WETH, any ERC-20) to security token holders proportionally, using the Synthetix/MasterChef accumulator pattern. **O(1) per operation** — no holder iteration required.
+
+### Use Case
+
+An issuer tokenizes a building as tokenId 1 with 10,000 tokens. Every month, rent income (USDC) is deposited. Holders automatically accrue yield proportional to their balance and can claim at any time.
+
+### How It Works
+
+```mermaid
+graph LR
+    subgraph Admin["Admin (Issuer)"]
+        A1["1. addRewardToken(tokenId, USDC)"]
+        A2["2. approve(yieldModule, amount)"]
+        A3["3. depositYield(tokenId, USDC, 10000e6)"]
+    end
+
+    subgraph Math["Accumulator (O(1))"]
+        ACC["accRewardPerShare += amount * 1e36 / totalSupply"]
+    end
+
+    subgraph Auto["Automatic Checkpoints (via hooks)"]
+        H1["Transfer → crystallize sender & receiver"]
+        H2["Mint → checkpoint receiver"]
+        H3["Burn → checkpoint sender"]
+    end
+
+    subgraph Holder["Holder"]
+        C1["claimYield(tokenId, USDC)"]
+        C2["claimAllYield(tokenId)"]
+        C3["claimableYield(tokenId, USDC, holder)"]
+    end
+
+    A1 --> A2 --> A3
+    A3 --> ACC
+    ACC --> H1 & H2 & H3
+    H1 & H2 & H3 --> C1 & C2
+
+    style Math fill:#ffd,stroke:#aa0
+    style Auto fill:#ddf,stroke:#33a
+    style Admin fill:#efe,stroke:#3a3
+```
+
+### Accumulator Math
+
+```
+On deposit:
+  accRewardPerShare += depositAmount * PRECISION / totalSupply
+
+On query/claim:
+  pending(user) = balance * accRewardPerShare / PRECISION - rewardDebt + pendingRewards
+
+On balance change (transfer/mint/burn):
+  pendingRewards += preBalance * acc / PRECISION - rewardDebt   (crystallize)
+  rewardDebt = postBalance * acc / PRECISION                     (reset checkpoint)
+```
+
+`PRECISION = 1e36` — high enough to avoid truncation even with low-decimal tokens (USDC = 6 decimals).
+
+### Numerical Example
+
+```
+Setup:
+  Alice holds 7,500 tokens
+  Bob holds 2,500 tokens
+  Total supply: 10,000
+
+Step 1 — Admin deposits 1,000 USDC:
+  accRewardPerShare = 1000e6 * 1e36 / 10000 = 1e41
+
+Step 2 — Query claimable:
+  alice.claimable = 7500 * 1e41 / 1e36 = 750e6  (750 USDC) ✓
+  bob.claimable   = 2500 * 1e41 / 1e36 = 250e6  (250 USDC) ✓
+
+Step 3 — Alice transfers 5,000 to Carol:
+  alice: crystallize 750 USDC → pendingRewards = 750e6
+  carol: new holder → rewardDebt set, no past rewards
+
+Step 4 — Admin deposits another 500 USDC:
+  accRewardPerShare += 500e6 * 1e36 / 10000
+
+Step 5 — Query again:
+  alice: 750 (crystallized) + 125 (50% of 500, she now has 2500) = 875 USDC
+  bob:   250 (from step 1) + 125 (25% of 500) = 375 USDC
+  carol: 0 (crystallized) + 250 (50% of 500, she has 5000) = 250 USDC
+  Total: 875 + 375 + 250 = 1,500 USDC = total deposited ✓
+```
+
+### API Reference
+
+#### Admin Functions (only owner)
+
+| Function | Description |
+|----------|-------------|
+| `addRewardToken(tokenId, rewardToken)` | Register an ERC-20 token as reward for a tokenId. Max 5 per tokenId. |
+| `removeRewardToken(tokenId, rewardToken)` | Unregister a reward token. Existing unclaimed rewards are preserved. |
+| `depositYield(tokenId, rewardToken, amount)` | Pull `amount` of reward tokens from caller (requires prior `approve`) and distribute proportionally to all current holders. Reverts if totalSupply is 0. |
+
+#### Holder Functions (anyone)
+
+| Function | Description |
+|----------|-------------|
+| `claimYield(tokenId, rewardToken)` | Claim accumulated yield for a specific reward token. Reverts if nothing to claim. |
+| `claimAllYield(tokenId)` | Claim accumulated yield for all registered reward tokens in one transaction. |
+
+#### View Functions
+
+| Function | Description |
+|----------|-------------|
+| `claimableYield(tokenId, rewardToken, holder)` | Returns the amount of reward tokens claimable by a holder. |
+| `getRewardTokens(tokenId)` | Returns all registered reward token addresses for a tokenId. |
+| `isRewardToken(tokenId, rewardToken)` | Returns true if the reward token is registered. |
+| `accRewardPerShare(tokenId, rewardToken)` | Returns the current accumulator value. |
+| `name()` | Returns `"YieldDistributor"`. |
+
+#### Events
+
+| Event | When |
+|-------|------|
+| `RewardTokenAdded(tokenId, rewardToken)` | A reward token is registered |
+| `RewardTokenRemoved(tokenId, rewardToken)` | A reward token is unregistered |
+| `YieldDeposited(tokenId, rewardToken, amount)` | Yield is deposited for distribution |
+| `YieldClaimed(tokenId, rewardToken, holder, amount)` | A holder claims their yield |
+
+#### Errors
+
+| Error | When |
+|-------|------|
+| `YieldDistributorModule__OnlyOwner()` | Non-owner calls admin function |
+| `YieldDistributorModule__OnlyDiamond()` | Non-Diamond calls `onAction` |
+| `YieldDistributorModule__ZeroDiamond()` | Constructor receives `address(0)` for Diamond |
+| `YieldDistributorModule__ZeroAddress()` | Reward token is `address(0)` |
+| `YieldDistributorModule__ZeroAmount()` | Deposit amount is 0 |
+| `YieldDistributorModule__ZeroSupply(tokenId)` | Deposit when no holders exist |
+| `YieldDistributorModule__RewardTokenAlreadyAdded(tokenId, rewardToken)` | Duplicate registration |
+| `YieldDistributorModule__RewardTokenNotFound(tokenId, rewardToken)` | Deposit/remove for unregistered token |
+| `YieldDistributorModule__NothingToClaim()` | Claim with zero claimable |
+| `YieldDistributorModule__TooManyRewardTokens()` | Exceeds 5 reward tokens per tokenId |
+
+### Security Considerations
+
+- **CEI Pattern** — `claimYield` resets `pendingRewards` and `rewardDebt` before transferring tokens (Checks-Effects-Interactions), preventing reentrancy.
+- **SafeERC20** — All ERC-20 transfers use OpenZeppelin's `SafeERC20` for compatibility with non-standard tokens (USDT) that don't return `bool`.
+- **Access Control** — Only the Diamond can call `onAction` (`_enforceDiamond`). Only the module owner can call admin functions (`_enforceOwner`).
+- **Precision** — `PRECISION = 1e36` prevents truncation with low-decimal tokens. With USDC (6 decimals), even 1 raw unit (0.000001 USDC) deposited across 10,000 supply produces a non-zero accumulator delta.
+- **Post-hook semantics** — Hooks fire AFTER balance mutation. The module reconstructs pre-mutation balances: `from` had `currentBalance + amount`, `to` had `currentBalance - amount`.
+- **Max 5 reward tokens** — Bounds the gas cost of hook loops to prevent griefing.
+
+### Gas Costs
+
+| Operation | Approximate Gas |
+|-----------|----------------|
+| `depositYield` (1 reward token) | ~85k |
+| `claimYield` (1 reward token) | ~65k |
+| `claimAllYield` (3 reward tokens) | ~150k |
+| Hook overhead per transfer (1 reward token) | ~25k |
+| Hook overhead per transfer (5 reward tokens) | ~100k |
+
+### Testing
+
+50 tests covering all layers:
+
+| Category | Tests | Description |
+|----------|-------|-------------|
+| Constructor & Name | 3 | State initialization, zero address revert, name |
+| Reward Token Management | 7 | Add, remove, duplicates, max limit, zero address, access control |
+| Deposit Yield | 5 | USDC deposit, zero amount, zero supply, unregistered token, access |
+| Single Holder Claim | 1 | Sole holder gets 100% |
+| Proportional Distribution | 2 | 2-holder and 3-holder proportional split |
+| Nothing to Claim | 2 | No yield deposited, already claimed |
+| Claim All (multi-token) | 1 | USDC + WETH in one tx |
+| Transfer Checkpoints | 2 | Crystallization on transfer, new receiver gets zero past rewards |
+| Mint Checkpoints | 2 | Existing holder preserves rewards, new holder gets zero |
+| Burn Checkpoints | 1 | Preserves rewards after partial burn |
+| Forced Transfer | 1 | Admin forced transfer crystallizes correctly |
+| Multiple Deposits | 1 | Sequential deposits accumulate |
+| Decimal Precision | 5 | WETH (18), WBTC (8), small USDC, 1 raw unit, small holder in large supply |
+| Non-Standard ERC-20 | 1 | USDT-style token (no bool return) |
+| Failing ERC-20 | 1 | Revert on transfer propagates |
+| Complex Scenarios | 4 | Deposit→transfer→deposit, mint dilution, burn+claim, claim between deposits |
+| Hook Access Control | 3 | onAction reverts for non-Diamond caller |
+| No-Op Hooks | 1 | No reward tokens = hooks return early |
+| Fuzz (256 runs each) | 3 | Proportional distribution, claim never exceeds deposit, transfer preserves total |
+| Event Emissions | 4 | All 4 events verified |
 
 ## Asset Groups & Lazy Minting
 
@@ -137,12 +617,12 @@ Child tokens that haven't been sold don't exist on-chain — zero gas cost until
 
 ## Storage
 
-11 isolated storage namespaces prevent slot collisions during upgrades:
+12 isolated storage namespaces prevent slot collisions during upgrades:
 
 | Library | Domain |
 |---------|--------|
 | `LibAppStorage` | Owner, pending owner, global pause, protocol version |
-| `LibAssetStorage` | Asset configs per `tokenId` (name, symbol, supply cap, compliance module) |
+| `LibAssetStorage` | Asset configs per `tokenId` (name, symbol, supply cap, compliance module, plugin modules) |
 | `LibERC1155Storage` | Balance partitions (free/locked/custody/pending), operator approvals |
 | `LibSupplyStorage` | Total supply, holder count, holder tracking per `tokenId` |
 | `LibFreezeStorage` | Global freeze, asset freeze, frozen amounts, lockup expiry |
@@ -152,6 +632,7 @@ Child tokens that haven't been sold don't exist on-chain — zero gas cost until
 | `LibSnapshotStorage` | Snapshot data with balance captures |
 | `LibDividendStorage` | Dividend records with claim tracking |
 | `LibAssetGroupStorage` | Group configs, parent-child relationships |
+| `LibGlobalPluginStorage` | Global plugin registry, indexed mapping, plugin metadata |
 
 Each slot is derived from `keccak256("diamond.rwa.<domain>.storage") - 1`.
 
@@ -163,28 +644,39 @@ diamond-erc3643/
 │   ├── contracts/                    # Solidity (Foundry)
 │   │   ├── src/
 │   │   │   ├── Diamond.sol           # EIP-2535 proxy
-│   │   │   ├── facets/               # 19 facets by domain
+│   │   │   ├── facets/               # 21 facets by domain
 │   │   │   │   ├── core/
 │   │   │   │   ├── token/
 │   │   │   │   ├── identity/
 │   │   │   │   ├── compliance/
+│   │   │   │   ├── plugins/          # GlobalPluginFacet
+│   │   │   │   ├── routers/          # PluginRouterFacet
 │   │   │   │   ├── rwa/
 │   │   │   │   └── security/
-│   │   │   ├── compliance/modules/   # Pluggable compliance modules
-│   │   │   ├── interfaces/           # Domain-organized interfaces
+│   │   │   ├── compliance/modules/   # Pluggable compliance modules (gating)
+│   │   │   ├── plugins/modules/      # Pluggable plugin modules (reactive)
+│   │   │   │   └── YieldDistributorModule.sol
+│   │   │   ├── interfaces/
+│   │   │   │   ├── plugins/          # IPluginModule, IHookablePlugin
+│   │   │   │   └── ...               # Domain-organized interfaces
 │   │   │   ├── libraries/            # LibDiamond, LibAppStorage, LibReasonCodes
-│   │   │   ├── storage/              # 11 namespaced storage libraries
+│   │   │   ├── storage/              # 12 namespaced storage libraries
 │   │   │   └── initializers/         # DiamondInit
 │   │   ├── test/
-│   │   │   ├── unit/                 # 26 test files (1:1 with facets + modules)
-│   │   │   ├── fuzz/                 # Property-based tests
+│   │   │   ├── unit/                 # 28 test files (1:1 with facets + modules)
+│   │   │   │   ├── GlobalPluginFacet.t.sol
+│   │   │   │   └── modules/plugins/  # YieldDistributorModule tests (50 tests)
+│   │   │   ├── fuzz/                 # Property-based fuzz tests
 │   │   │   ├── invariant/            # FREI-PI pattern invariant tests
-│   │   │   └── helpers/              # DiamondHelper, MockComplianceModule
+│   │   │   ├── echidna/              # Echidna property-based fuzzing
+│   │   │   └── helpers/              # DiamondHelper, MockComplianceModule, MockERC20, MockPluginModule
 │   │   ├── script/                   # Deploy.s.sol, ConfigureAsset.s.sol
 │   │   ├── foundry.toml
 │   │   ├── remappings.txt
 │   │   └── Makefile
-│   └── indexer/                      # Go blockchain event indexer
+│   ├── indexer/                      # Go blockchain event indexer
+│   ├── app/                          # React 19 + Wagmi + RainbowKit frontend
+│   └── tools/                        # Developer utilities
 ├── docs/
 │   ├── architecture.md               # Detailed architecture specification
 │   └── diagrams/                     # Mermaid diagrams (EN + PT)
@@ -196,6 +688,44 @@ diamond-erc3643/
 ├── pnpm-workspace.yaml
 └── package.json
 ```
+
+## Deployments
+
+### Polygon Amoy Testnet (Chain ID: 80002)
+
+| Contract | Address | Verified |
+|----------|---------|----------|
+| **Diamond (Proxy)** | [`0xAb07CEf1BEeDBb30F5795418c79879794b31C521`](https://amoy.polygonscan.com/address/0xAb07CEf1BEeDBb30F5795418c79879794b31C521) | ✅ |
+| DiamondCutFacet | [`0x499b99F9516be8a363c7923e57d8dab2E63fC0D9`](https://amoy.polygonscan.com/address/0x499b99F9516be8a363c7923e57d8dab2E63fC0D9) | ✅ |
+| DiamondLoupeFacet | [`0x92Da52B23380A68f4565cD3f5aECAb31FC56eff1`](https://amoy.polygonscan.com/address/0x92Da52B23380A68f4565cD3f5aECAb31FC56eff1) | ✅ |
+| OwnershipFacet | [`0x97CBfcF2662c81fa93EcdC1A6e82045980061427`](https://amoy.polygonscan.com/address/0x97CBfcF2662c81fa93EcdC1A6e82045980061427) | ✅ |
+| AccessControlFacet | [`0xD097fe5983a52e9e28a504375285e8Ca124C880B`](https://amoy.polygonscan.com/address/0xD097fe5983a52e9e28a504375285e8Ca124C880B) | ✅ |
+| PauseFacet | [`0xEF310f4bD869e9711c45022B3A8Da074A003FF0C`](https://amoy.polygonscan.com/address/0xEF310f4bD869e9711c45022B3A8Da074A003FF0C) | ✅ |
+| EmergencyFacet | [`0x67561FF38AF20f93E3e835B5F02D4545E30266C6`](https://amoy.polygonscan.com/address/0x67561FF38AF20f93E3e835B5F02D4545E30266C6) | ✅ |
+| FreezeFacet | [`0xdfd98C7b28CCcaE14b48612c4239B36E78094F49`](https://amoy.polygonscan.com/address/0xdfd98C7b28CCcaE14b48612c4239B36E78094F49) | ✅ |
+| RecoveryFacet | [`0xA1CBD518D0b4C7850099b2AA1a26889739c32B5a`](https://amoy.polygonscan.com/address/0xA1CBD518D0b4C7850099b2AA1a26889739c32B5a) | ✅ |
+| AssetManagerFacet (v2) | [`0xBE58CB4e9d0dBbC21C4333ae513dc9aAe1Bc470a`](https://amoy.polygonscan.com/address/0xBE58CB4e9d0dBbC21C4333ae513dc9aAe1Bc470a) | ✅ |
+| ClaimTopicsFacet | [`0xcE23BcDc538430aF96745968dBc874C1daB8C824`](https://amoy.polygonscan.com/address/0xcE23BcDc538430aF96745968dBc874C1daB8C824) | ✅ |
+| TrustedIssuerFacet | [`0x578550bA4fAe186Cd7614862De3Ec8092F7Db5Db`](https://amoy.polygonscan.com/address/0x578550bA4fAe186Cd7614862De3Ec8092F7Db5Db) | ✅ |
+| IdentityRegistryFacet | [`0x514f8C0c8b9C5Dd3BF78AAB95c162a32eA653522`](https://amoy.polygonscan.com/address/0x514f8C0c8b9C5Dd3BF78AAB95c162a32eA653522) | ✅ |
+| ComplianceRouterFacet | [`0x09BCf4BafA1a4943024E6A8b9ffc55AC539EEb13`](https://amoy.polygonscan.com/address/0x09BCf4BafA1a4943024E6A8b9ffc55AC539EEb13) | ✅ |
+| ERC1155Facet (v2) | [`0xc7a6D1561eAa0837907e49f9245332744d6B5204`](https://amoy.polygonscan.com/address/0xc7a6D1561eAa0837907e49f9245332744d6B5204) | ✅ |
+| SupplyFacet (v2) | [`0x4F52cCd0F5941D2177d9ea98A5C0a35100d0e7E1`](https://amoy.polygonscan.com/address/0x4F52cCd0F5941D2177d9ea98A5C0a35100d0e7E1) | ✅ |
+| MetadataFacet | [`0x7BeaC0bEA5687191c41Bb39E5C8c708a13f49Ad7`](https://amoy.polygonscan.com/address/0x7BeaC0bEA5687191c41Bb39E5C8c708a13f49Ad7) | ✅ |
+| SnapshotFacet | [`0xd11381ea9b24b90b16671F04727B2D39793d4C76`](https://amoy.polygonscan.com/address/0xd11381ea9b24b90b16671F04727B2D39793d4C76) | ✅ |
+| DividendFacet | [`0xD08d0D88CA607Bacc3945532158Ec8b52E397190`](https://amoy.polygonscan.com/address/0xD08d0D88CA607Bacc3945532158Ec8b52E397190) | ✅ |
+| AssetGroupFacet | [`0xBF5753C300796f7D78227E0BD1f4A2FbAD3e9C9c`](https://amoy.polygonscan.com/address/0xBF5753C300796f7D78227E0BD1f4A2FbAD3e9C9c) | ✅ |
+| DiamondInit | [`0x663217FCFC5807636b1201b413921Ab01b1C6Be0`](https://amoy.polygonscan.com/address/0x663217FCFC5807636b1201b413921Ab01b1C6Be0) | ✅ |
+| DiamondABI (EIP-1967) | [`0x5Cc6aF3a9DeF71326de4c0DfE9Da9bb7E1B0bd55`](https://amoy.polygonscan.com/address/0x5Cc6aF3a9DeF71326de4c0DfE9Da9bb7E1B0bd55) | ✅ |
+| CountryRestrictModule | [`0x0c15e06c36b07E44aEe6D49a75554bc7bfFa50D2`](https://amoy.polygonscan.com/address/0x0c15e06c36b07E44aEe6D49a75554bc7bfFa50D2) | ✅ |
+| MaxBalanceModule | [`0x4B3cCd1F7BB1aF5F41b73e7fE3010023FcD89B44`](https://amoy.polygonscan.com/address/0x4B3cCd1F7BB1aF5F41b73e7fE3010023FcD89B44) | ✅ |
+| MaxHoldersModule | [`0xC40Bf7bb339DD4485b1F5c3c0C5FE78DACD9999a`](https://amoy.polygonscan.com/address/0xC40Bf7bb339DD4485b1F5c3c0C5FE78DACD9999a) | ✅ |
+| GlobalPluginFacet | [`0x7C01A56f048b196D14EbcE1454b816930B6dF826`](https://amoy.polygonscan.com/address/0x7C01A56f048b196D14EbcE1454b816930B6dF826) | ✅ |
+| PluginRouterFacet | [`0xB4558240336b0971199774b597D2A6Be5CbEF0D9`](https://amoy.polygonscan.com/address/0xB4558240336b0971199774b597D2A6Be5CbEF0D9) | ✅ |
+
+> **Owner:** `0xB40061C7bf8394eb130Fcb5EA06868064593BFAa`
+>
+> Full deployment data: [`packages/contracts/deployments/amoy.json`](packages/contracts/deployments/amoy.json)
 
 ## Getting Started
 
@@ -227,15 +757,16 @@ make build           # forge build --sizes
 make test            # all tests
 make test-unit       # unit tests only
 make test-fuzz       # fuzz tests (10,000 runs)
-make test-invariant  # invariant tests (10,000 runs, depth 500)
+make test-invariant  # invariant tests (10,000 runs)
 make test-contract CONTRACT=ERC1155Facet   # single contract
 ```
 
-### Coverage & Analysis
+### Security Testing
 
 ```bash
-make coverage        # forge coverage → lcov.info
 make slither         # static analysis
+make echidna         # property-based fuzzing (50,000 calls)
+make coverage        # forge coverage → lcov.info
 make lint            # solhint
 ```
 
@@ -276,6 +807,7 @@ The CI pipeline runs 7 parallel jobs on every PR:
 | **Fuzz** | 10,000 fuzz runs on `test/fuzz/**` |
 | **Invariant** | 10,000 invariant runs on `test/invariant/**` |
 | **Slither** | Static analysis with Slither |
+| **Echidna** | Property-based fuzzing (50,000 calls) |
 | **Coverage** | `forge coverage` → Codecov |
 
 ## Roles & Permissions
@@ -283,10 +815,10 @@ The CI pipeline runs 7 parallel jobs on every PR:
 | Role | Capabilities |
 |------|-------------|
 | **Owner** | `diamondCut`, `transferOwnership`, `emergencyPause`, `setRoleAdmin` |
-| **COMPLIANCE_ADMIN** | `registerAsset`, `createGroup`, `setComplianceModules`, `addComplianceModule`, `removeComplianceModule`, `setIdentityProfile`, `registerIdentity` |
+| **COMPLIANCE_ADMIN** | `registerAsset`, `createGroup`, `setComplianceModules`, `addComplianceModule`, `removeComplianceModule`, `addPluginModule`, `removePluginModule`, `registerGlobalPlugin`, `removeGlobalPlugin`, `setGlobalPluginStatus`, `setIdentityProfile`, `registerIdentity` |
 | **ISSUER_ROLE** | `mint`, `burn`, `mintUnit`, `mintUnitBatch`, `createDividend` |
 | **TRANSFER_AGENT** | `forcedTransfer`, `recoverWallet` |
-| **Token Holder** | `safeTransferFrom` (if compliance passes), `claimDividend`, `setApprovalForAll` |
+| **Token Holder** | `safeTransferFrom` (if compliance passes), `claimDividend`, `claimYield`, `claimAllYield`, `setApprovalForAll` |
 
 ## Documentation
 
@@ -297,15 +829,18 @@ The CI pipeline runs 7 parallel jobs on every PR:
 
 | # | Diagram |
 |---|---------|
-| 01 | High-Level Architecture — Diamond proxy + 19 facets + 11 storage slots |
+| 01 | High-Level Architecture — Diamond proxy + 21 facets + 12 storage slots |
 | 02 | Regulated Transfer Flow — 6 validation stages with revert paths |
 | 03 | Asset Groups & Lazy Minting — `createGroup` → `mintUnit` with gas costs |
-| 04 | Storage Layout — 11 namespaced slots with all fields |
+| 04 | Storage Layout — 12 namespaced slots with all fields |
 | 05 | Roles & Permissions — RBAC tree with all operations |
 | 06 | Compliance Pipeline — Sequence diagram of full transfer validation |
 | 07 | Full Technology Stack — Frontend → Indexer → Blockchain |
 | 08 | Token Lifecycle — State machine: register → mint → freeze → snapshot → dividend |
 | 09 | Real Estate Example — End-to-end building tokenization with rent distribution |
+| 10 | Plugin System — Compliance (gating) vs Asset Plugins (reactive) vs Global Plugins (services) |
+| 11 | Plugin Hook Flow — Sequence diagram of onAction dispatch |
+| 12 | YieldDistributor — Accumulator pattern with O(1) distribution |
 
 ## Tech Stack
 
@@ -315,7 +850,7 @@ The CI pipeline runs 7 parallel jobs on every PR:
 | Proxy Pattern | EIP-2535 Diamond (Nick Mudge reference) |
 | Token Standard | ERC-1155 with ERC-3643 compliance hooks |
 | Identity | ONCHAINID (ERC-734 keys + ERC-735 claims) |
-| Testing | Forge (unit + fuzz + invariant), Slither |
+| Testing | Forge (unit + fuzz + invariant), Echidna, Slither |
 | Indexer | Go + RocksDB + GraphQL |
 | CI/CD | GitHub Actions, Codecov, Changesets |
 | Monorepo | pnpm workspaces + Turborepo |

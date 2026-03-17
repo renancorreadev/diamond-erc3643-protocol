@@ -29,6 +29,7 @@ FACETS=(
     "TrustedIssuerFacet"
     "ComplianceRouterFacet"
     "OwnershipFacet"
+    "AssetGroupFacet"
 )
 
 for facet in "${FACETS[@]}"; do

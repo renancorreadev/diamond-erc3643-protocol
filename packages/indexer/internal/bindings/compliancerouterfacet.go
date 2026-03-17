@@ -31,7 +31,7 @@ var (
 
 // ComplianceRouterFacetMetaData contains all meta data concerning the ComplianceRouterFacet contract.
 var ComplianceRouterFacetMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"burned\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"canTransfer\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[{\"name\":\"ok\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"reason\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getComplianceModule\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"module\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"minted\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transferred\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"error\",\"name\":\"ComplianceRouterFacet__AssetNotRegistered\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"burned\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"canTransfer\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[{\"name\":\"ok\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"reason\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getComplianceModules\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"minted\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transferred\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"error\",\"name\":\"ComplianceRouterFacet__AssetNotRegistered\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}]",
 }
 
 // ComplianceRouterFacetABI is the input ABI used to generate the binding from.
@@ -225,35 +225,35 @@ func (_ComplianceRouterFacet *ComplianceRouterFacetCallerSession) CanTransfer(to
 	return _ComplianceRouterFacet.Contract.CanTransfer(&_ComplianceRouterFacet.CallOpts, tokenId, from, to, amount, data)
 }
 
-// GetComplianceModule is a free data retrieval call binding the contract method 0x52dc0250.
+// GetComplianceModules is a free data retrieval call binding the contract method 0x71417690.
 //
-// Solidity: function getComplianceModule(uint256 tokenId) view returns(address module)
-func (_ComplianceRouterFacet *ComplianceRouterFacetCaller) GetComplianceModule(opts *bind.CallOpts, tokenId *big.Int) (common.Address, error) {
+// Solidity: function getComplianceModules(uint256 tokenId) view returns(address[])
+func (_ComplianceRouterFacet *ComplianceRouterFacetCaller) GetComplianceModules(opts *bind.CallOpts, tokenId *big.Int) ([]common.Address, error) {
 	var out []interface{}
-	err := _ComplianceRouterFacet.contract.Call(opts, &out, "getComplianceModule", tokenId)
+	err := _ComplianceRouterFacet.contract.Call(opts, &out, "getComplianceModules", tokenId)
 
 	if err != nil {
-		return *new(common.Address), err
+		return *new([]common.Address), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+	out0 := *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
 
 	return out0, err
 
 }
 
-// GetComplianceModule is a free data retrieval call binding the contract method 0x52dc0250.
+// GetComplianceModules is a free data retrieval call binding the contract method 0x71417690.
 //
-// Solidity: function getComplianceModule(uint256 tokenId) view returns(address module)
-func (_ComplianceRouterFacet *ComplianceRouterFacetSession) GetComplianceModule(tokenId *big.Int) (common.Address, error) {
-	return _ComplianceRouterFacet.Contract.GetComplianceModule(&_ComplianceRouterFacet.CallOpts, tokenId)
+// Solidity: function getComplianceModules(uint256 tokenId) view returns(address[])
+func (_ComplianceRouterFacet *ComplianceRouterFacetSession) GetComplianceModules(tokenId *big.Int) ([]common.Address, error) {
+	return _ComplianceRouterFacet.Contract.GetComplianceModules(&_ComplianceRouterFacet.CallOpts, tokenId)
 }
 
-// GetComplianceModule is a free data retrieval call binding the contract method 0x52dc0250.
+// GetComplianceModules is a free data retrieval call binding the contract method 0x71417690.
 //
-// Solidity: function getComplianceModule(uint256 tokenId) view returns(address module)
-func (_ComplianceRouterFacet *ComplianceRouterFacetCallerSession) GetComplianceModule(tokenId *big.Int) (common.Address, error) {
-	return _ComplianceRouterFacet.Contract.GetComplianceModule(&_ComplianceRouterFacet.CallOpts, tokenId)
+// Solidity: function getComplianceModules(uint256 tokenId) view returns(address[])
+func (_ComplianceRouterFacet *ComplianceRouterFacetCallerSession) GetComplianceModules(tokenId *big.Int) ([]common.Address, error) {
+	return _ComplianceRouterFacet.Contract.GetComplianceModules(&_ComplianceRouterFacet.CallOpts, tokenId)
 }
 
 // Burned is a paid mutator transaction binding the contract method 0xae7d103e.

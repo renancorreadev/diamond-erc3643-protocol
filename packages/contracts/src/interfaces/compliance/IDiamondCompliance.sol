@@ -17,6 +17,9 @@ interface IDiamondCompliance {
     /// @notice Returns unique holder count for a tokenId (from SupplyFacet)
     function holderCount(uint256 tokenId) external view returns (uint256);
 
+    /// @notice Returns total minted supply for a tokenId (from SupplyFacet)
+    function totalSupply(uint256 tokenId) external view returns (uint256);
+
     /// @notice Returns the full partition balance (from ERC1155Facet)
     function partitionBalanceOf(address account, uint256 id)
         external

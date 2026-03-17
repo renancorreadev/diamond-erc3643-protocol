@@ -21,12 +21,28 @@ import {ClaimTopicsFacet} from "../src/facets/identity/ClaimTopicsFacet.sol";
 import {TrustedIssuerFacet} from "../src/facets/identity/TrustedIssuerFacet.sol";
 import {IdentityRegistryFacet} from "../src/facets/identity/IdentityRegistryFacet.sol";
 import {ComplianceRouterFacet} from "../src/facets/compliance/ComplianceRouterFacet.sol";
+import {PluginRouterFacet} from "../src/facets/routers/PluginRouterFacet.sol";
+import {GlobalPluginFacet} from "../src/facets/plugins/GlobalPluginFacet.sol";
 import {ERC1155Facet} from "../src/facets/token/ERC1155Facet.sol";
 import {SupplyFacet} from "../src/facets/token/SupplyFacet.sol";
 import {MetadataFacet} from "../src/facets/token/MetadataFacet.sol";
 import {IDiamond, IDiamondCut, IDiamondLoupe} from "../src/interfaces/core/IDiamond.sol";
 // solhint-disable-next-line import-path-check
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {IERC1155MetadataURI} from "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
+
+/// @dev Sets EIP-1967 implementation slot so Polygonscan shows "Read/Write as Proxy".
+contract EIP1967Init {
+    bytes32 internal constant _IMPLEMENTATION_SLOT =
+        0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+
+    function init(address implementation) external {
+        assembly {
+            sstore(_IMPLEMENTATION_SLOT, implementation)
+        }
+    }
+}
 
 /// @title Deploy
 /// @author Renan Correa <renan.correa@hubweb3.com>
@@ -43,6 +59,13 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 /// Environment:
 ///   OWNER_ADDRESS — Diamond owner (defaults to msg.sender)
 contract Deploy is Script {
+    /*//////////////////////////////////////////////////////////////
+                                ERRORS
+    //////////////////////////////////////////////////////////////*/
+
+    error Deploy__UnexpectedFacetCount(uint256 expected, uint256 actual);
+    error Deploy__WrongOwner(address expected, address actual);
+    error Deploy__MissingInterface(bytes4 interfaceId);
     function run() external {
         address owner = vm.envOr("OWNER_ADDRESS", msg.sender);
 
@@ -69,6 +92,8 @@ contract Deploy is Script {
         SnapshotFacet snapshotFacet = new SnapshotFacet();
         DividendFacet dividendFacet = new DividendFacet();
         AssetGroupFacet assetGroupFacet = new AssetGroupFacet();
+        PluginRouterFacet pluginRouterFacet = new PluginRouterFacet();
+        GlobalPluginFacet globalPluginFacet = new GlobalPluginFacet();
         DiamondInit diamondInit = new DiamondInit();
 
         // ── 2. Deploy Diamond ───────────────────────────────────────
@@ -77,7 +102,7 @@ contract Deploy is Script {
 
         // ── 3. Build facet cuts ─────────────────────────────────────
 
-        IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](18);
+        IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](20);
 
         cuts[0] = _cut(address(loupeFacet), _loupeSelectors());
         cuts[1] = _cut(address(ownershipFacet), _ownershipSelectors());
@@ -97,16 +122,30 @@ contract Deploy is Script {
         cuts[15] = _cut(address(snapshotFacet), _snapshotSelectors());
         cuts[16] = _cut(address(dividendFacet), _dividendSelectors());
         cuts[17] = _cut(address(assetGroupFacet), _assetGroupSelectors());
+        cuts[18] = _cut(address(pluginRouterFacet), _pluginRouterSelectors());
+        cuts[19] = _cut(address(globalPluginFacet), _globalPluginSelectors());
 
         // ── 4. Execute diamond cut + init ───────────────────────────
 
+        string memory tokenName = vm.envOr("TOKEN_NAME", string("Diamond RWA"));
+        string memory tokenSymbol = vm.envOr("TOKEN_SYMBOL", string("dRWA"));
+
         IDiamondCut(address(diamond)).diamondCut(
-            cuts, address(diamondInit), abi.encodeCall(DiamondInit.init, ())
+            cuts, address(diamondInit), abi.encodeCall(DiamondInit.init, (tokenName, tokenSymbol))
+        );
+
+        // ── 5. Set EIP-1967 implementation slot for Polygonscan proxy detection ──
+
+        EIP1967Init eip1967Init = new EIP1967Init();
+        IDiamondCut(address(diamond)).diamondCut(
+            new IDiamond.FacetCut[](0),
+            address(eip1967Init),
+            abi.encodeCall(EIP1967Init.init, (address(loupeFacet)))
         );
 
         vm.stopBroadcast();
 
-        // ── 5. Log addresses ────────────────────────────────────────
+        // ── 6. Log addresses ────────────────────────────────────────
 
         console2.log("");
         console2.log("=== Diamond ERC-3643 Protocol ===");
@@ -145,10 +184,16 @@ contract Deploy is Script {
         console2.log("--- Compliance ---");
         console2.log("ComplianceRouterFacet:", address(complianceRouterFacet));
         console2.log("");
+        console2.log("--- Plugins ---");
+        console2.log("PluginRouterFacet    :", address(pluginRouterFacet));
+        console2.log("GlobalPluginFacet    :", address(globalPluginFacet));
+        console2.log("");
+        console2.log("--- Initializers ---");
         console2.log("DiamondInit          :", address(diamondInit));
+        console2.log("EIP1967Init          :", address(eip1967Init));
         console2.log("");
 
-        // ── 6. Verify ───────────────────────────────────────────────
+        // ── 7. Verify ───────────────────────────────────────────────
 
         _verify(diamond, owner);
     }
@@ -234,7 +279,7 @@ contract Deploy is Script {
     }
 
     function _assetManagerSelectors() internal pure returns (bytes4[] memory sels) {
-        sels = new bytes4[](14);
+        sels = new bytes4[](18);
         sels[0] = AssetManagerFacet.registerAsset.selector;
         sels[1] = AssetManagerFacet.addComplianceModule.selector;
         sels[2] = AssetManagerFacet.removeComplianceModule.selector;
@@ -249,6 +294,10 @@ contract Deploy is Script {
         sels[11] = AssetManagerFacet.getRegisteredTokenIds.selector;
         sels[12] = AssetManagerFacet.assetExists.selector;
         sels[13] = AssetManagerFacet.nextTokenId.selector;
+        sels[14] = AssetManagerFacet.addPluginModule.selector;
+        sels[15] = AssetManagerFacet.removePluginModule.selector;
+        sels[16] = AssetManagerFacet.setPluginModules.selector;
+        sels[17] = AssetManagerFacet.getPluginModules.selector;
     }
 
     function _claimTopicsSelectors() internal pure returns (bytes4[] memory sels) {
@@ -281,12 +330,28 @@ contract Deploy is Script {
     }
 
     function _complianceRouterSelectors() internal pure returns (bytes4[] memory sels) {
-        sels = new bytes4[](5);
+        sels = new bytes4[](4);
         sels[0] = ComplianceRouterFacet.canTransfer.selector;
         sels[1] = ComplianceRouterFacet.transferred.selector;
         sels[2] = ComplianceRouterFacet.minted.selector;
         sels[3] = ComplianceRouterFacet.burned.selector;
-        sels[4] = ComplianceRouterFacet.getComplianceModules.selector;
+    }
+
+    function _pluginRouterSelectors() internal pure returns (bytes4[] memory sels) {
+        sels = new bytes4[](1);
+        sels[0] = PluginRouterFacet.pluginAction.selector;
+    }
+
+    function _globalPluginSelectors() internal pure returns (bytes4[] memory sels) {
+        sels = new bytes4[](8);
+        sels[0] = GlobalPluginFacet.registerGlobalPlugin.selector;
+        sels[1] = GlobalPluginFacet.removeGlobalPlugin.selector;
+        sels[2] = GlobalPluginFacet.setGlobalPluginStatus.selector;
+        sels[3] = GlobalPluginFacet.getGlobalPlugins.selector;
+        sels[4] = GlobalPluginFacet.getActiveGlobalPlugins.selector;
+        sels[5] = GlobalPluginFacet.getGlobalPluginInfo.selector;
+        sels[6] = GlobalPluginFacet.isGlobalPlugin.selector;
+        sels[7] = GlobalPluginFacet.globalPluginCount.selector;
     }
 
     function _erc1155Selectors() internal pure returns (bytes4[] memory sels) {
@@ -312,14 +377,16 @@ contract Deploy is Script {
     }
 
     function _metadataSelectors() internal pure returns (bytes4[] memory sels) {
-        sels = new bytes4[](7);
+        sels = new bytes4[](9);
         sels[0] = MetadataFacet.uri.selector;
-        sels[1] = MetadataFacet.name.selector;
-        sels[2] = MetadataFacet.symbol.selector;
+        sels[1] = bytes4(0x00ad800c); // name(uint256)
+        sels[2] = bytes4(0x4e41a1fb); // symbol(uint256)
         sels[3] = MetadataFacet.supplyCap.selector;
         sels[4] = MetadataFacet.issuer.selector;
         sels[5] = MetadataFacet.allowedCountries.selector;
         sels[6] = MetadataFacet.tokenInfo.selector;
+        sels[7] = bytes4(0x06fdde03); // name()
+        sels[8] = bytes4(0x95d89b41); // symbol()
     }
 
     function _snapshotSelectors() internal pure returns (bytes4[] memory sels) {
@@ -361,26 +428,34 @@ contract Deploy is Script {
     //////////////////////////////////////////////////////////////*/
 
     function _verify(Diamond diamond, address expectedOwner) internal view {
+        // Facet count
         address[] memory facetAddrs = IDiamondLoupe(address(diamond)).facetAddresses();
-        require(facetAddrs.length == 19, "Deploy: expected 19 facets");
+        if (facetAddrs.length != 21) {
+            revert Deploy__UnexpectedFacetCount(21, facetAddrs.length);
+        }
 
-        require(
-            OwnershipFacet(address(diamond)).owner() == expectedOwner,
-            "Deploy: wrong owner"
-        );
+        // Ownership
+        address actualOwner = OwnershipFacet(address(diamond)).owner();
+        if (actualOwner != expectedOwner) {
+            revert Deploy__WrongOwner(expectedOwner, actualOwner);
+        }
 
-        require(
-            IERC165(address(diamond)).supportsInterface(type(IERC165).interfaceId),
-            "Deploy: missing IERC165"
-        );
-        require(
-            IERC165(address(diamond)).supportsInterface(type(IDiamondCut).interfaceId),
-            "Deploy: missing IDiamondCut"
-        );
-        require(
-            IERC165(address(diamond)).supportsInterface(type(IDiamondLoupe).interfaceId),
-            "Deploy: missing IDiamondLoupe"
-        );
+        // Required ERC-165 interfaces
+        IERC165 erc165 = IERC165(address(diamond));
+
+        bytes4[5] memory requiredInterfaces = [
+            type(IERC165).interfaceId,
+            type(IDiamondCut).interfaceId,
+            type(IDiamondLoupe).interfaceId,
+            type(IERC1155).interfaceId,
+            type(IERC1155MetadataURI).interfaceId
+        ];
+
+        for (uint256 i; i < requiredInterfaces.length; ++i) {
+            if (!erc165.supportsInterface(requiredInterfaces[i])) {
+                revert Deploy__MissingInterface(requiredInterfaces[i]);
+            }
+        }
 
         console2.log("=== Verification OK ===");
         console2.log("Facets registered    :", facetAddrs.length);
