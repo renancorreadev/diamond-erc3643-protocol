@@ -51,9 +51,10 @@
       "url": "https://amoy.polygonscan.com/address/0xA1CBD518D0b4C7850099b2AA1a26889739c32B5a"
     },
     "AssetManagerFacet": {
-      "address": "0x9BDaEDa3A0Aaec41cF08f00fD55a5c178ea3d7f1",
+      "address": "0xBE58CB4e9d0dBbC21C4333ae513dc9aAe1Bc470a",
       "verified": true,
-      "url": "https://amoy.polygonscan.com/address/0x9BDaEDa3A0Aaec41cF08f00fD55a5c178ea3d7f1"
+      "url": "https://amoy.polygonscan.com/address/0xBE58CB4e9d0dBbC21C4333ae513dc9aAe1Bc470a",
+      "note": "v2 — 4 new plugin selectors added; old impl (0x9BDaEDa3) still serves 14 original selectors"
     },
     "ClaimTopicsFacet": {
       "address": "0xcE23BcDc538430aF96745968dBc874C1daB8C824",
@@ -76,14 +77,14 @@
       "url": "https://amoy.polygonscan.com/address/0x09BCf4BafA1a4943024E6A8b9ffc55AC539EEb13"
     },
     "ERC1155Facet": {
-      "address": "0x2EF1aD8C024114874e10aF26b9212A27eb03FA70",
+      "address": "0xc7a6D1561eAa0837907e49f9245332744d6B5204",
       "verified": true,
-      "url": "https://amoy.polygonscan.com/address/0x2EF1aD8C024114874e10aF26b9212A27eb03FA70"
+      "url": "https://amoy.polygonscan.com/address/0xc7a6D1561eAa0837907e49f9245332744d6B5204"
     },
     "SupplyFacet": {
-      "address": "0xFCF4532842a6AddA939A9283E6D68a97232C8eC2",
+      "address": "0x4F52cCd0F5941D2177d9ea98A5C0a35100d0e7E1",
       "verified": true,
-      "url": "https://amoy.polygonscan.com/address/0xFCF4532842a6AddA939A9283E6D68a97232C8eC2"
+      "url": "https://amoy.polygonscan.com/address/0x4F52cCd0F5941D2177d9ea98A5C0a35100d0e7E1"
     },
     "MetadataFacet": {
       "address": "0x7BeaC0bEA5687191c41Bb39E5C8c708a13f49Ad7",
@@ -134,6 +135,16 @@
       "address": "0xC40Bf7bb339DD4485b1F5c3c0C5FE78DACD9999a",
       "verified": true,
       "url": "https://amoy.polygonscan.com/address/0xC40Bf7bb339DD4485b1F5c3c0C5FE78DACD9999a"
+    },
+    "GlobalPluginFacet": {
+      "address": "0x7C01A56f048b196D14EbcE1454b816930B6dF826",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0x7C01A56f048b196D14EbcE1454b816930B6dF826"
+    },
+    "PluginRouterFacet": {
+      "address": "0xB4558240336b0971199774b597D2A6Be5CbEF0D9",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0xB4558240336b0971199774b597D2A6Be5CbEF0D9"
     }
   }
 }
