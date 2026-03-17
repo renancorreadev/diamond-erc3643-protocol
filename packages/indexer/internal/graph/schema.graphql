@@ -22,15 +22,84 @@ type TransferEvent {
   eventType: String!
 }
 
+type Asset {
+  id: String!
+  name: String!
+  symbol: String!
+  issuer: String!
+  profileId: Int!
+  uri: String
+  paused: Boolean!
+  totalSupply: String!
+  holderCount: Int!
+  registeredAt: Int!
+  holders(first: Int = 50): [Holder!]!
+  events(first: Int = 20, eventType: String): [ProtocolEvent!]!
+}
+
+type IdentityRecord {
+  wallet: String!
+  identity: String!
+  country: Int!
+  boundAt: Int!
+}
+
+type FreezeRecord {
+  wallet: String!
+  tokenId: String
+  frozen: Boolean!
+  frozenAmount: String
+  lockupExpiry: Int
+}
+
+type ProtocolEvent {
+  txHash: String!
+  block: Int!
+  logIndex: Int!
+  eventType: String!
+  tokenId: String
+  address: String
+  data: String!
+}
+
+type PortfolioHolding {
+  tokenId: String!
+  balance: String!
+}
+
 type IndexerStatus {
   lastBlock: Int!
   tokenCount: Int!
 }
 
 type Query {
+  # Existing
   token(id: String!): Token
   tokens: [Token!]!
   holder(tokenId: String!, address: String!): Holder
   events(first: Int = 50): [TransferEvent!]!
   status: IndexerStatus!
+
+  # Assets
+  asset(id: String!): Asset
+  assets: [Asset!]!
+
+  # Identity
+  identity(wallet: String!): IdentityRecord
+  identities(country: Int, first: Int = 50): [IdentityRecord!]!
+
+  # Freeze
+  freezes(wallet: String!): [FreezeRecord!]!
+  frozenWallets(tokenId: String): [FreezeRecord!]!
+
+  # Protocol events (generic)
+  protocolEvents(
+    first: Int = 50
+    eventType: String
+    tokenId: String
+    address: String
+  ): [ProtocolEvent!]!
+
+  # Portfolio
+  portfolio(address: String!): [PortfolioHolding!]!
 }
