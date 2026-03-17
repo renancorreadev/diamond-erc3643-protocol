@@ -5,7 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {DiamondHelper} from "../../../helpers/DiamondHelper.sol";
 import {MockERC20, MockNonStandardERC20, MockFailingERC20} from "../../../helpers/MockERC20.sol";
 import {MockERC1155} from "../../../helpers/MockERC1155.sol";
-import {YieldDistributorModule} from "../../../../src/plugins/modules/YieldDistributorModule.sol";
+import {YieldDistributorModule} from "../../../../src/plugins/modules/YieldDistributorModule/YieldDistributorModule.sol";
 import {SupplyFacet} from "../../../../src/facets/token/SupplyFacet.sol";
 import {ERC1155Facet} from "../../../../src/facets/token/ERC1155Facet.sol";
 import {AssetManagerFacet} from "../../../../src/facets/token/AssetManagerFacet.sol";

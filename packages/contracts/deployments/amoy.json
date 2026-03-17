@@ -112,14 +112,16 @@
       "url": "https://amoy.polygonscan.com/address/0x663217FCFC5807636b1201b413921Ab01b1C6Be0"
     },
     "EIP1967Init": {
-      "address": "0xeF4c9f66260B5846487Cfd9416FCE3ad27115513",
+      "address": "0x377590396353b83d4B4637D7E8A56fFdBA364277",
       "verified": true,
-      "url": "https://amoy.polygonscan.com/address/0xeF4c9f66260B5846487Cfd9416FCE3ad27115513"
+      "url": "https://amoy.polygonscan.com/address/0x377590396353b83d4b4637d7e8a56ffdba364277",
+      "note": "v2 — updated with plugin system ABI"
     },
     "DiamondABI": {
-      "address": "0x5Cc6aF3a9DeF71326de4c0DfE9Da9bb7E1B0bd55",
+      "address": "0xf164d030005Db7845ed756D69f17470868d69E5b",
       "verified": true,
-      "url": "https://amoy.polygonscan.com/address/0x5Cc6aF3a9DeF71326de4c0DfE9Da9bb7E1B0bd55"
+      "url": "https://amoy.polygonscan.com/address/0xf164d030005db7845ed756d69f17470868d69e5b",
+      "note": "v2 — includes GlobalPlugin, PluginModule, PluginRouter sections"
     },
     "CountryRestrictModule": {
       "address": "0x0c15e06c36b07E44aEe6D49a75554bc7bfFa50D2",
@@ -145,6 +147,12 @@
       "address": "0xB4558240336b0971199774b597D2A6Be5CbEF0D9",
       "verified": true,
       "url": "https://amoy.polygonscan.com/address/0xB4558240336b0971199774b597D2A6Be5CbEF0D9"
+    },
+    "YieldDistributorModule": {
+      "address": "0xa8c6A9AAfd18545bEe6BC734eba702C55beA95dF",
+      "verified": true,
+      "url": "https://amoy.polygonscan.com/address/0xa8c6a9aafd18545bee6bc734eba702c55bea95df",
+      "note": "Per-asset plugin, registered on tokenId 1"
     }
   }
 }

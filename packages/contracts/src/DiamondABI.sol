@@ -4,6 +4,7 @@ pragma solidity 0.8.28;
 import {IDiamond, IDiamondCut, IDiamondLoupe} from "./interfaces/core/IDiamond.sol";
 import {AssetConfig} from "./storage/LibAssetStorage.sol";
 import {AssetGroup} from "./storage/LibAssetGroupStorage.sol";
+import {IHookablePlugin} from "./interfaces/plugins/IHookablePlugin.sol";
 
 /// @title DiamondABI
 /// @author Renan Correa <renan.correa@hubweb3.com>
@@ -328,4 +329,37 @@ contract DiamondABI {
         view
         returns (bool ok, bytes32 reason)
     {}
+
+    /*//////////////////////////////////////////////////////////////
+                        GLOBAL PLUGINS
+    //////////////////////////////////////////////////////////////*/
+
+    struct GlobalPluginInfo {
+        address plugin;
+        uint64 registeredAt;
+        bool active;
+    }
+
+    function registerGlobalPlugin(address plugin) external {}
+    function removeGlobalPlugin(address plugin) external {}
+    function setGlobalPluginStatus(address plugin, bool active) external {}
+    function getGlobalPlugins() external view returns (GlobalPluginInfo[] memory) {}
+    function getActiveGlobalPlugins() external view returns (address[] memory) {}
+    function getGlobalPluginInfo(address plugin) external view returns (GlobalPluginInfo memory) {}
+    function isGlobalPlugin(address plugin) external view returns (bool) {}
+    function globalPluginCount() external view returns (uint256) {}
+
+    /*//////////////////////////////////////////////////////////////
+                    ASSET PLUGIN MODULES
+    //////////////////////////////////////////////////////////////*/
+
+    function addPluginModule(uint256 tokenId, address module) external {}
+    function removePluginModule(uint256 tokenId, address module) external {}
+    function getPluginModules(uint256 tokenId) external view returns (address[] memory) {}
+
+    /*//////////////////////////////////////////////////////////////
+                       PLUGIN ROUTER
+    //////////////////////////////////////////////////////////////*/
+
+    function pluginAction(IHookablePlugin.ActionParams calldata params) external {}
 }
