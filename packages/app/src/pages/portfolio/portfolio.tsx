@@ -4,6 +4,7 @@ import { useAccount, useReadContract, useReadContracts } from 'wagmi';
 
 import { DIAMOND_ADDRESS, diamondAbi } from '@/config/contracts';
 import { formatTokenAmount } from '@/lib/format';
+import { useIndexerPortfolio, useIndexerAssets } from '@/hooks/use-indexer';
 
 const diamond = { address: DIAMOND_ADDRESS, abi: diamondAbi } as const;
 
@@ -24,6 +25,22 @@ type AssetConfig = {
 export default function PortfolioPage() {
   const { address, isConnected } = useAccount();
 
+  // Indexer: fast portfolio + asset metadata
+  const { data: indexerPortfolio, isLoading: indexerLoading } = useIndexerPortfolio(address);
+  const { data: indexerAssets } = useIndexerAssets();
+
+  // Build asset lookup from indexer
+  const assetMap = useMemo(() => {
+    const map = new Map<string, { name: string; symbol: string }>();
+    if (indexerAssets) {
+      for (const a of indexerAssets) {
+        map.set(a.id, { name: a.name, symbol: a.symbol });
+      }
+    }
+    return map;
+  }, [indexerAssets]);
+
+  // On-chain fallback: read all token IDs + balances + configs
   const { data: tokenIds, isLoading: idsLoading } = useReadContract({
     ...diamond,
     functionName: 'getRegisteredTokenIds',
@@ -59,7 +76,10 @@ export default function PortfolioPage() {
     query: { enabled: configContracts.length > 0 },
   });
 
-  const isLoading = idsLoading || balancesLoading || configsLoading;
+  // Use indexer data if available, otherwise wait for on-chain
+  const hasIndexerData = !!indexerPortfolio && indexerPortfolio.length > 0;
+  const onChainLoading = idsLoading || balancesLoading || configsLoading;
+  const isLoading = hasIndexerData ? false : (indexerLoading || onChainLoading);
 
   if (!isConnected) {
     return (
@@ -89,13 +109,29 @@ export default function PortfolioPage() {
     );
   }
 
-  const tokens = registeredIds.map((id, i) => {
+  // Merge: prefer on-chain data when available, fall back to indexer
+  const onChainTokens = registeredIds.map((id, i) => {
     const balance = balancesData?.[i]?.result as bigint | undefined;
     const config = configsData?.[i]?.result as AssetConfig | undefined;
-    return { id, balance: balance ?? 0n, config };
+    return { id: id.toString(), balance: balance ?? 0n, name: config?.name, symbol: config?.symbol };
   });
 
-  const tokensWithBalance = tokens.filter((t) => t.balance > 0n);
+  const onChainWithBalance = onChainTokens.filter((t) => t.balance > 0n);
+
+  // If on-chain data is ready, use it; otherwise use indexer
+  const tokensWithBalance = onChainWithBalance.length > 0
+    ? onChainWithBalance.map((t) => ({
+        id: t.id,
+        balance: t.balance,
+        name: t.name ?? assetMap.get(t.id)?.name,
+        symbol: t.symbol ?? assetMap.get(t.id)?.symbol,
+      }))
+    : (indexerPortfolio ?? []).map((h) => ({
+        id: h.tokenId,
+        balance: BigInt(h.balance),
+        name: assetMap.get(h.tokenId)?.name,
+        symbol: assetMap.get(h.tokenId)?.symbol,
+      }));
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] p-8">
@@ -111,21 +147,21 @@ export default function PortfolioPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {tokensWithBalance.map((token) => (
-            <Link key={token.id.toString()} to={`/portfolio/${token.id.toString()}`}>
+            <Link key={token.id} to={`/portfolio/${token.id}`}>
               <div className="rounded-xl bg-white/5 border border-white/10 p-6 transition-colors hover:border-indigo-400/50 hover:bg-white/[0.08]">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-lg font-semibold text-indigo-400">
-                    {token.config?.name ?? `Token #${token.id.toString()}`}
+                    {token.name ?? `Token #${token.id}`}
                   </h3>
                   <span className="text-xs font-mono text-gray-500 bg-white/5 px-2 py-1 rounded">
-                    {token.config?.symbol ?? '???'}
+                    {token.symbol ?? '???'}
                   </span>
                 </div>
                 <p className="text-2xl font-bold text-white">
                   {formatTokenAmount(token.balance)}
                 </p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Token ID: {token.id.toString()}
+                  Token ID: {token.id}
                 </p>
               </div>
             </Link>
