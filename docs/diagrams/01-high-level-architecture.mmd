@@ -1,13 +1,15 @@
 graph TB
     subgraph External["External Contracts"]
         ONCHAINID["ONCHAINID<br/><i>ERC-734 Keys + ERC-735 Claims</i>"]
+        CountryMod["CountryRestrictModule"]
         MaxBal["MaxBalanceModule"]
         MaxHold["MaxHoldersModule"]
+        YieldMod["YieldDistributorModule<br/><i>ERC-20 + ERC-1155 rewards</i>"]
     end
 
     User(("Investor<br/>Wallet")) -->|"all calls"| Diamond
 
-    subgraph Diamond["Diamond Proxy — Single Address"]
+    subgraph Diamond["Diamond Proxy — Single Address (EIP-2535)"]
         direction TB
         FB["fallback() → delegatecall<br/><i>selector → facet lookup</i>"]
     end
@@ -16,39 +18,41 @@ graph TB
     Diamond -->|delegatecall| Security
     Diamond -->|delegatecall| Token
     Diamond -->|delegatecall| Identity
-    Diamond -->|delegatecall| Compliance
+    Diamond -->|delegatecall| Routers
     Diamond -->|delegatecall| RWA
 
-    subgraph Core["Core"]
+    subgraph Core["Core (3)"]
         DiamondCut["DiamondCutFacet<br/><i>upgrade facets</i>"]
         DiamondLoupe["DiamondLoupeFacet<br/><i>introspection + ERC-165</i>"]
         Ownership["OwnershipFacet<br/><i>Ownable2Step</i>"]
     end
 
-    subgraph Security["Security"]
-        ACL["AccessControlFacet<br/><i>RBAC: grant/revoke roles</i>"]
+    subgraph Security["Security (3)"]
+        ACL["AccessControlFacet<br/><i>RBAC: 8 roles</i>"]
         Pause["PauseFacet<br/><i>global + per-asset pause</i>"]
         Emergency["EmergencyFacet<br/><i>circuit breaker</i>"]
     end
 
-    subgraph Token["Token (ERC-1155)"]
-        AssetMgr["AssetManagerFacet<br/><i>register asset classes</i>"]
-        ERC1155["ERC1155Facet<br/><i>transfers + balances</i>"]
+    subgraph Token["Token — ERC-1155 (4)"]
+        AssetMgr["AssetManagerFacet<br/><i>register assets + plugin modules</i>"]
+        ERC1155["ERC1155Facet<br/><i>transfers + compliance + plugin hooks</i>"]
         Supply["SupplyFacet<br/><i>mint / burn / forcedTransfer</i>"]
         Metadata["MetadataFacet<br/><i>name, symbol, URI per tokenId</i>"]
     end
 
-    subgraph Identity["Identity (KYC/AML)"]
+    subgraph Identity["Identity — KYC/AML (3)"]
         IdReg["IdentityRegistryFacet<br/><i>wallet → ONCHAINID + country</i>"]
         Claims["ClaimTopicsFacet<br/><i>required KYC claim topics</i>"]
         Issuers["TrustedIssuerFacet<br/><i>authorized claim issuers</i>"]
     end
 
-    subgraph Compliance["Compliance"]
-        Router["ComplianceRouterFacet<br/><i>canTransfer() per tokenId</i>"]
+    subgraph Routers["Routers & Plugins (3)"]
+        CompRouter["ComplianceRouterFacet<br/><i>canTransfer() → compliance modules</i>"]
+        PluginRouter["PluginRouterFacet<br/><i>onAction() → plugin modules</i>"]
+        GlobalPlugin["GlobalPluginFacet<br/><i>protocol-wide plugin registry</i>"]
     end
 
-    subgraph RWA["RWA Operations"]
+    subgraph RWA["RWA Operations (5)"]
         Freeze["FreezeFacet<br/><i>freeze / lockup</i>"]
         Recovery["RecoveryFacet<br/><i>wallet recovery</i>"]
         Snapshot["SnapshotFacet<br/><i>point-in-time balances</i>"]
@@ -57,10 +61,13 @@ graph TB
     end
 
     IdReg -.->|"verify"| ONCHAINID
-    Router -.->|"delegate"| MaxBal
-    Router -.->|"delegate"| MaxHold
+    CompRouter -.->|"gate"| CountryMod
+    CompRouter -.->|"gate"| MaxBal
+    CompRouter -.->|"gate"| MaxHold
+    PluginRouter -.->|"onAction()"| YieldMod
+    YieldMod -.->|"balanceOf()\ntotalSupply()"| Diamond
 
-    subgraph Storage["Shared Storage (11 isolated slots)"]
+    subgraph Storage["Shared Storage (13 isolated slots)"]
         S1["LibAppStorage"]
         S2["LibAssetStorage"]
         S3["LibERC1155Storage"]
@@ -72,13 +79,15 @@ graph TB
         S9["LibSnapshotStorage"]
         S10["LibDividendStorage"]
         S11["LibAssetGroupStorage"]
+        S12["LibGlobalPluginStorage"]
+        S13["LibDiamondStorage"]
     end
 
     Core -.-> Storage
     Security -.-> Storage
     Token -.-> Storage
     Identity -.-> Storage
-    Compliance -.-> Storage
+    Routers -.-> Storage
     RWA -.-> Storage
 
     classDef proxy fill:#4f46e5,stroke:#818cf8,color:#fff,stroke-width:2px
@@ -86,7 +95,7 @@ graph TB
     classDef security fill:#d97706,stroke:#f59e0b,color:#fff
     classDef token fill:#059669,stroke:#10b981,color:#fff
     classDef identity fill:#7c3aed,stroke:#8b5cf6,color:#fff
-    classDef compliance fill:#dc2626,stroke:#ef4444,color:#fff
+    classDef routers fill:#dc2626,stroke:#ef4444,color:#fff
     classDef rwa fill:#4338ca,stroke:#6366f1,color:#fff
     classDef storage fill:#1e293b,stroke:#475569,color:#94a3b8
     classDef external fill:#334155,stroke:#64748b,color:#cbd5e1
@@ -97,8 +106,8 @@ graph TB
     class ACL,Pause,Emergency security
     class AssetMgr,ERC1155,Supply,Metadata token
     class IdReg,Claims,Issuers identity
-    class Router compliance
+    class CompRouter,PluginRouter,GlobalPlugin routers
     class Freeze,Recovery,Snapshot,Dividend,AssetGroup rwa
-    class S1,S2,S3,S4,S5,S6,S7,S8,S9,S10,S11 storage
-    class ONCHAINID,MaxBal,MaxHold external
+    class S1,S2,S3,S4,S5,S6,S7,S8,S9,S10,S11,S12,S13 storage
+    class ONCHAINID,CountryMod,MaxBal,MaxHold,YieldMod external
     class User user

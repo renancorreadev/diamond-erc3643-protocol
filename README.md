@@ -89,7 +89,7 @@ Global              ──  Diamond ownership, global pause, RBAC, identity regi
 
 | Module | Description |
 |--------|-------------|
-| `YieldDistributorModule` | Distributes real yield (any ERC-20) to holders proportionally via accumulator pattern (O(1) per operation) |
+| `YieldDistributorModule` | Distributes real yield (ERC-20, ERC-1155 internal or external) to holders proportionally via accumulator pattern (O(1) per operation) |
 
 ## Transfer Flow
 
@@ -414,192 +414,6 @@ GlobalPluginFacet(diamond).registerGlobalPlugin(address(marketplace));
 
 ---
 
-## YieldDistributorModule
-
-The first plugin module. Distributes real yield (USDC, WETH, any ERC-20) to security token holders proportionally, using the Synthetix/MasterChef accumulator pattern. **O(1) per operation** — no holder iteration required.
-
-### Use Case
-
-An issuer tokenizes a building as tokenId 1 with 10,000 tokens. Every month, rent income (USDC) is deposited. Holders automatically accrue yield proportional to their balance and can claim at any time.
-
-### How It Works
-
-```mermaid
-graph LR
-    subgraph Admin["Admin (Issuer)"]
-        A1["1. addRewardToken(tokenId, USDC)"]
-        A2["2. approve(yieldModule, amount)"]
-        A3["3. depositYield(tokenId, USDC, 10000e6)"]
-    end
-
-    subgraph Math["Accumulator (O(1))"]
-        ACC["accRewardPerShare += amount * 1e36 / totalSupply"]
-    end
-
-    subgraph Auto["Automatic Checkpoints (via hooks)"]
-        H1["Transfer → crystallize sender & receiver"]
-        H2["Mint → checkpoint receiver"]
-        H3["Burn → checkpoint sender"]
-    end
-
-    subgraph Holder["Holder"]
-        C1["claimYield(tokenId, USDC)"]
-        C2["claimAllYield(tokenId)"]
-        C3["claimableYield(tokenId, USDC, holder)"]
-    end
-
-    A1 --> A2 --> A3
-    A3 --> ACC
-    ACC --> H1 & H2 & H3
-    H1 & H2 & H3 --> C1 & C2
-
-    style Math fill:#ffd,stroke:#aa0
-    style Auto fill:#ddf,stroke:#33a
-    style Admin fill:#efe,stroke:#3a3
-```
-
-### Accumulator Math
-
-```
-On deposit:
-  accRewardPerShare += depositAmount * PRECISION / totalSupply
-
-On query/claim:
-  pending(user) = balance * accRewardPerShare / PRECISION - rewardDebt + pendingRewards
-
-On balance change (transfer/mint/burn):
-  pendingRewards += preBalance * acc / PRECISION - rewardDebt   (crystallize)
-  rewardDebt = postBalance * acc / PRECISION                     (reset checkpoint)
-```
-
-`PRECISION = 1e36` — high enough to avoid truncation even with low-decimal tokens (USDC = 6 decimals).
-
-### Numerical Example
-
-```
-Setup:
-  Alice holds 7,500 tokens
-  Bob holds 2,500 tokens
-  Total supply: 10,000
-
-Step 1 — Admin deposits 1,000 USDC:
-  accRewardPerShare = 1000e6 * 1e36 / 10000 = 1e41
-
-Step 2 — Query claimable:
-  alice.claimable = 7500 * 1e41 / 1e36 = 750e6  (750 USDC) ✓
-  bob.claimable   = 2500 * 1e41 / 1e36 = 250e6  (250 USDC) ✓
-
-Step 3 — Alice transfers 5,000 to Carol:
-  alice: crystallize 750 USDC → pendingRewards = 750e6
-  carol: new holder → rewardDebt set, no past rewards
-
-Step 4 — Admin deposits another 500 USDC:
-  accRewardPerShare += 500e6 * 1e36 / 10000
-
-Step 5 — Query again:
-  alice: 750 (crystallized) + 125 (50% of 500, she now has 2500) = 875 USDC
-  bob:   250 (from step 1) + 125 (25% of 500) = 375 USDC
-  carol: 0 (crystallized) + 250 (50% of 500, she has 5000) = 250 USDC
-  Total: 875 + 375 + 250 = 1,500 USDC = total deposited ✓
-```
-
-### API Reference
-
-#### Admin Functions (only owner)
-
-| Function | Description |
-|----------|-------------|
-| `addRewardToken(tokenId, rewardToken)` | Register an ERC-20 token as reward for a tokenId. Max 5 per tokenId. |
-| `removeRewardToken(tokenId, rewardToken)` | Unregister a reward token. Existing unclaimed rewards are preserved. |
-| `depositYield(tokenId, rewardToken, amount)` | Pull `amount` of reward tokens from caller (requires prior `approve`) and distribute proportionally to all current holders. Reverts if totalSupply is 0. |
-
-#### Holder Functions (anyone)
-
-| Function | Description |
-|----------|-------------|
-| `claimYield(tokenId, rewardToken)` | Claim accumulated yield for a specific reward token. Reverts if nothing to claim. |
-| `claimAllYield(tokenId)` | Claim accumulated yield for all registered reward tokens in one transaction. |
-
-#### View Functions
-
-| Function | Description |
-|----------|-------------|
-| `claimableYield(tokenId, rewardToken, holder)` | Returns the amount of reward tokens claimable by a holder. |
-| `getRewardTokens(tokenId)` | Returns all registered reward token addresses for a tokenId. |
-| `isRewardToken(tokenId, rewardToken)` | Returns true if the reward token is registered. |
-| `accRewardPerShare(tokenId, rewardToken)` | Returns the current accumulator value. |
-| `name()` | Returns `"YieldDistributor"`. |
-
-#### Events
-
-| Event | When |
-|-------|------|
-| `RewardTokenAdded(tokenId, rewardToken)` | A reward token is registered |
-| `RewardTokenRemoved(tokenId, rewardToken)` | A reward token is unregistered |
-| `YieldDeposited(tokenId, rewardToken, amount)` | Yield is deposited for distribution |
-| `YieldClaimed(tokenId, rewardToken, holder, amount)` | A holder claims their yield |
-
-#### Errors
-
-| Error | When |
-|-------|------|
-| `YieldDistributorModule__OnlyOwner()` | Non-owner calls admin function |
-| `YieldDistributorModule__OnlyDiamond()` | Non-Diamond calls `onAction` |
-| `YieldDistributorModule__ZeroDiamond()` | Constructor receives `address(0)` for Diamond |
-| `YieldDistributorModule__ZeroAddress()` | Reward token is `address(0)` |
-| `YieldDistributorModule__ZeroAmount()` | Deposit amount is 0 |
-| `YieldDistributorModule__ZeroSupply(tokenId)` | Deposit when no holders exist |
-| `YieldDistributorModule__RewardTokenAlreadyAdded(tokenId, rewardToken)` | Duplicate registration |
-| `YieldDistributorModule__RewardTokenNotFound(tokenId, rewardToken)` | Deposit/remove for unregistered token |
-| `YieldDistributorModule__NothingToClaim()` | Claim with zero claimable |
-| `YieldDistributorModule__TooManyRewardTokens()` | Exceeds 5 reward tokens per tokenId |
-
-### Security Considerations
-
-- **CEI Pattern** — `claimYield` resets `pendingRewards` and `rewardDebt` before transferring tokens (Checks-Effects-Interactions), preventing reentrancy.
-- **SafeERC20** — All ERC-20 transfers use OpenZeppelin's `SafeERC20` for compatibility with non-standard tokens (USDT) that don't return `bool`.
-- **Access Control** — Only the Diamond can call `onAction` (`_enforceDiamond`). Only the module owner can call admin functions (`_enforceOwner`).
-- **Precision** — `PRECISION = 1e36` prevents truncation with low-decimal tokens. With USDC (6 decimals), even 1 raw unit (0.000001 USDC) deposited across 10,000 supply produces a non-zero accumulator delta.
-- **Post-hook semantics** — Hooks fire AFTER balance mutation. The module reconstructs pre-mutation balances: `from` had `currentBalance + amount`, `to` had `currentBalance - amount`.
-- **Max 5 reward tokens** — Bounds the gas cost of hook loops to prevent griefing.
-
-### Gas Costs
-
-| Operation | Approximate Gas |
-|-----------|----------------|
-| `depositYield` (1 reward token) | ~85k |
-| `claimYield` (1 reward token) | ~65k |
-| `claimAllYield` (3 reward tokens) | ~150k |
-| Hook overhead per transfer (1 reward token) | ~25k |
-| Hook overhead per transfer (5 reward tokens) | ~100k |
-
-### Testing
-
-50 tests covering all layers:
-
-| Category | Tests | Description |
-|----------|-------|-------------|
-| Constructor & Name | 3 | State initialization, zero address revert, name |
-| Reward Token Management | 7 | Add, remove, duplicates, max limit, zero address, access control |
-| Deposit Yield | 5 | USDC deposit, zero amount, zero supply, unregistered token, access |
-| Single Holder Claim | 1 | Sole holder gets 100% |
-| Proportional Distribution | 2 | 2-holder and 3-holder proportional split |
-| Nothing to Claim | 2 | No yield deposited, already claimed |
-| Claim All (multi-token) | 1 | USDC + WETH in one tx |
-| Transfer Checkpoints | 2 | Crystallization on transfer, new receiver gets zero past rewards |
-| Mint Checkpoints | 2 | Existing holder preserves rewards, new holder gets zero |
-| Burn Checkpoints | 1 | Preserves rewards after partial burn |
-| Forced Transfer | 1 | Admin forced transfer crystallizes correctly |
-| Multiple Deposits | 1 | Sequential deposits accumulate |
-| Decimal Precision | 5 | WETH (18), WBTC (8), small USDC, 1 raw unit, small holder in large supply |
-| Non-Standard ERC-20 | 1 | USDT-style token (no bool return) |
-| Failing ERC-20 | 1 | Revert on transfer propagates |
-| Complex Scenarios | 4 | Deposit→transfer→deposit, mint dilution, burn+claim, claim between deposits |
-| Hook Access Control | 3 | onAction reverts for non-Diamond caller |
-| No-Op Hooks | 1 | No reward tokens = hooks return early |
-| Fuzz (256 runs each) | 3 | Proportional distribution, claim never exceeds deposit, transfer preserves total |
-| Event Emissions | 4 | All 4 events verified |
-
 ## Asset Groups & Lazy Minting
 
 The `AssetGroupFacet` enables hierarchical tokenization — a parent asset (e.g., a building) can have child assets (e.g., individual apartments) that are only minted on-chain when sold:
@@ -655,7 +469,10 @@ diamond-erc3643/
 │   │   │   │   └── security/
 │   │   │   ├── compliance/modules/   # Pluggable compliance modules (gating)
 │   │   │   ├── plugins/modules/      # Pluggable plugin modules (reactive)
-│   │   │   │   └── YieldDistributorModule.sol
+│   │   │   │   └── YieldDistributorModule/
+│   │   │   │       ├── YieldDistributorModule.sol
+│   │   │   │       ├── README.md     # Full docs with examples
+│   │   │   │       └── diagrams/     # Architecture & flow diagrams (PNG)
 │   │   │   ├── interfaces/
 │   │   │   │   ├── plugins/          # IPluginModule, IHookablePlugin
 │   │   │   │   └── ...               # Domain-organized interfaces
@@ -665,7 +482,7 @@ diamond-erc3643/
 │   │   ├── test/
 │   │   │   ├── unit/                 # 28 test files (1:1 with facets + modules)
 │   │   │   │   ├── GlobalPluginFacet.t.sol
-│   │   │   │   └── modules/plugins/  # YieldDistributorModule tests (50 tests)
+│   │   │   │   └── modules/plugins/  # YieldDistributorModule tests (58 tests)
 │   │   │   ├── fuzz/                 # Property-based fuzz tests
 │   │   │   ├── invariant/            # FREI-PI pattern invariant tests
 │   │   │   ├── echidna/              # Echidna property-based fuzzing
@@ -716,14 +533,17 @@ diamond-erc3643/
 | DividendFacet | [`0xD08d0D88CA607Bacc3945532158Ec8b52E397190`](https://amoy.polygonscan.com/address/0xD08d0D88CA607Bacc3945532158Ec8b52E397190) | ✅ |
 | AssetGroupFacet | [`0xBF5753C300796f7D78227E0BD1f4A2FbAD3e9C9c`](https://amoy.polygonscan.com/address/0xBF5753C300796f7D78227E0BD1f4A2FbAD3e9C9c) | ✅ |
 | DiamondInit | [`0x663217FCFC5807636b1201b413921Ab01b1C6Be0`](https://amoy.polygonscan.com/address/0x663217FCFC5807636b1201b413921Ab01b1C6Be0) | ✅ |
-| DiamondABI (EIP-1967) | [`0x5Cc6aF3a9DeF71326de4c0DfE9Da9bb7E1B0bd55`](https://amoy.polygonscan.com/address/0x5Cc6aF3a9DeF71326de4c0DfE9Da9bb7E1B0bd55) | ✅ |
+| DiamondABI (EIP-1967 v2) | [`0xf164d030005Db7845ed756D69f17470868d69E5b`](https://amoy.polygonscan.com/address/0xf164d030005db7845ed756d69f17470868d69e5b) | ✅ |
 | CountryRestrictModule | [`0x0c15e06c36b07E44aEe6D49a75554bc7bfFa50D2`](https://amoy.polygonscan.com/address/0x0c15e06c36b07E44aEe6D49a75554bc7bfFa50D2) | ✅ |
 | MaxBalanceModule | [`0x4B3cCd1F7BB1aF5F41b73e7fE3010023FcD89B44`](https://amoy.polygonscan.com/address/0x4B3cCd1F7BB1aF5F41b73e7fE3010023FcD89B44) | ✅ |
 | MaxHoldersModule | [`0xC40Bf7bb339DD4485b1F5c3c0C5FE78DACD9999a`](https://amoy.polygonscan.com/address/0xC40Bf7bb339DD4485b1F5c3c0C5FE78DACD9999a) | ✅ |
 | GlobalPluginFacet | [`0x7C01A56f048b196D14EbcE1454b816930B6dF826`](https://amoy.polygonscan.com/address/0x7C01A56f048b196D14EbcE1454b816930B6dF826) | ✅ |
 | PluginRouterFacet | [`0xB4558240336b0971199774b597D2A6Be5CbEF0D9`](https://amoy.polygonscan.com/address/0xB4558240336b0971199774b597D2A6Be5CbEF0D9) | ✅ |
+| YieldDistributorModule | [`0xa8c6A9AAfd18545bEe6BC734eba702C55beA95dF`](https://amoy.polygonscan.com/address/0xa8c6a9aafd18545bee6bc734eba702c55bea95df) | ✅ |
 
 > **Owner:** `0xB40061C7bf8394eb130Fcb5EA06868064593BFAa`
+>
+> The Diamond proxy exposes **143 functions** (73 read + 70 write) through the DiamondABI stub — this is expected for an EIP-2535 Diamond with 21 facets. Each function lives in its own facet; the DiamondABI is a zero-logic contract that only provides the combined ABI for Polygonscan's "Read/Write as Proxy" interface.
 >
 > Full deployment data: [`packages/contracts/deployments/amoy.json`](packages/contracts/deployments/amoy.json)
 
