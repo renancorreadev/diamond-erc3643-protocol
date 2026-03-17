@@ -6,7 +6,7 @@ A single Diamond contract manages multiple regulated asset classes — each `tok
 
 ## Architecture
 
-![Diamond Architecture](docs/diamond.png)
+![Diamond Architecture](docs/diagram.png)
 
 ### Standards
 
